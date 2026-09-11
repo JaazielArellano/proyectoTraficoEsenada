@@ -1,3 +1,5 @@
+#CODIGO PARA LA EXTRACCION DE DATOS DE NOTICIAS EN FACEBOOK
+
 from datetime import datetime
 import json
 import re
