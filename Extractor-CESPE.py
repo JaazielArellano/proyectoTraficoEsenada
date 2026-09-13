@@ -1,10 +1,6 @@
 
 "Módulo Extractor para el portal CESPE (Comisión Estatal de Servicios Públicos de Ensenada)."
 
-import requests
-from bs4 import BeautifulSoup
-import json
-
 # Detetectar dias de la semana y numero. 
 def procesar_y_evaluar_dias(texto):
     """Analiza el texto de un aviso y detecta los días de la semana mencionados."""
@@ -12,7 +8,9 @@ def procesar_y_evaluar_dias(texto):
         "domingo", "lunes", "martes", "miercoles", "miércoles",
         "jueves", "viernes", "sabado", "sábado"
     ]
-    palabras = texto.split()
+    #se divide el texto en palabras individuales para poder
+    #revisar cada palabra y buscar los días de la semana.
+    palabras = texto.split() 
     diccionario_dias = {}
     texto_size = len(palabras)
 
