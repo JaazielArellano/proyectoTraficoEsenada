@@ -1,0 +1,56 @@
+"""Módulo para extraer datos de recibos y textos de la CFE."""
+
+import re
+
+
+def extraer_numero_servicio(texto):
+    """Extrae el número de servicio de CFE (12 dígitos)."""
+    patron = r"\b\d{12}\b"
+    coincidencia = re.search(patron, texto)
+    return coincidencia.group(0) if coincidencia else None
+
+
+def extraer_total_a_pagar(texto):
+    """Extrae el monto total a pagar."""
+    patron = r"(?:total\s*a\s*pagar|total)\s*:?\s*\$?\s*([\d,]+\.?\d{0,2})"
+    coincidencia = re.search(patron, texto, re.IGNORECASE)
+    if coincidencia:
+        monto_str = coincidencia.group(1).replace(",", "")
+        try:
+            return float(monto_str)
+        except ValueError:
+            return None
+    return None
+
+
+def extraer_periodo_facturado(texto):
+    """Extrae el rango de fechas del período facturado."""
+    meses = {
+        "ene": "01", "feb": "02", "mar": "03", "abr": "04",
+        "may": "05", "jun": "06", "jul": "07", "ago": "08",
+        "sep": "09", "oct": "10", "nov": "11", "dic": "12"
+    }
+    patron_texto = r"(\d{1,2})\s+([a-z]{3})\s+(\d{2,4})\s*-\s*(\d{1,2})\s+([a-z]{3})\s+(\d{2,4})"
+    coincidencia = re.search(patron_texto, texto, re.IGNORECASE)
+
+    if coincidencia:
+        d1, m1, a1, d2, m2, a2 = coincidencia.groups()
+        m1_num = meses.get(m1.lower()[:3], "00")
+        m2_num = meses.get(m2.lower()[:3], "00")
+        a1_full = f"20{a1}" if len(a1) == 2 else a1
+        a2_full = f"20{a2}" if len(a2) == 2 else a2
+
+        return {
+            "inicio": f"{a1_full}-{m1_num}-{int(d1):02d}",
+            "fin": f"{a2_full}-{m2_num}-{int(d2):02d}"
+        }
+    return None
+
+
+def procesar_recibo_cfe(texto):
+    """Procesa el texto completo del recibo de CFE."""
+    return {
+        "numero_servicio": extraer_numero_servicio(texto),
+        "total_a_pagar": extraer_total_a_pagar(texto),
+        "periodo_facturado": extraer_periodo_facturado(texto)
+    }
