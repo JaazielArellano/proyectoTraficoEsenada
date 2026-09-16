@@ -1,19 +1,33 @@
-import requests
-from bs4 import BeautifulSoup
+"""
+Módulo scraper para extraer los títulos y enlaces de noticias
+del portal ensenada.net utilizando BeautifulSoup y requests.
+"""
+
 from urllib.parse import urljoin
 
-def obtener_notas_ensenadanet():
+import requests
+from bs4 import BeautifulSoup
 
+
+def obtener_notas_ensenadanet():
+    """
+    Conecta a la página principal de ensenada.net, extrae los títulos de las notas
+    y sus enlaces correspondientes, y devuelve una lista de diccionarios.
+    """
     url_base = "https://ensenada.net/noticias/"
 
-
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': (
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/120.0.0.0 Safari/537.36'
+        )
     }
 
     print("Conectando con ensenada.net...")
-    respuesta = requests.get(url_base, headers=headers)
-    respuesta.encoding = 'latin-1' # Formato clásico para sitios web en español
+    # Se agrega un timeout de 10 segundos
+    respuesta = requests.get(url_base, headers=headers, timeout=10)
+    respuesta.encoding = 'latin-1'
 
     soup = BeautifulSoup(respuesta.text, 'html.parser')
 
@@ -37,6 +51,7 @@ def obtener_notas_ensenadanet():
             })
 
     return lista_noticias
+
 
 if __name__ == "__main__":
     noticias_extraidas = obtener_notas_ensenadanet()
