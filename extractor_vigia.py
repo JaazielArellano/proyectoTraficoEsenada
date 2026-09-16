@@ -1,5 +1,8 @@
 """Módulo para extraer datos del portal El Vigía."""
 
+# Importa el módulo json
+import json
+
 
 # Define la función que identifica los días de la semana y sus números
 def procesar_y_evaluar_dias(texto):
@@ -98,3 +101,101 @@ def extraer_fecha(texto):
 
     # Retorna None si no se encontró ninguna fecha válida en el texto
     return None
+
+
+# Función para extraer nombres de calles, avenidas y colonias
+def extraer_vias_publicas(texto):
+    """Busca palabras clave de vías públicas en el texto y guarda las calles."""
+    # Diccionario con listas vacías para cada uno
+    diccionario_vias = {
+        "calle": [],
+        "avenida": [],
+        "colonia": []
+    }
+    # Divide el texto en palabras individuales
+    palabras = texto.split()
+    # Obtiene la cantidad total de palabras
+    total_palabras = len(palabras)
+
+    # Recorre las palabras evaluando cada posición
+    for i, palabra in enumerate(palabras):
+        # Pasa la palabra a minúsculas y quita la puntuación
+        palabra_actual = palabra.lower().strip(",.:;")
+
+        # Comprueba que exista una palabra siguiente para tomar el nombre de la vía
+        if i + 1 < total_palabras:
+            # Obtiene el nombre de la vía/colonia eliminando puntuación
+            siguiente_palabra = palabras[i + 1].strip(",.:;")
+
+            # Si encuentra alguna palabra similar de avenida o bulevar, guarda la siguiente palabra
+            if palabra_actual in ["avenida", "av", "bulevar", "blvd"]:
+                diccionario_vias["avenida"].append(siguiente_palabra)
+            # Si encuentra la palabra calle, guarda el nombre asignado
+            elif palabra_actual == "calle":
+                diccionario_vias["calle"].append(siguiente_palabra)
+            # Si encuentra la palabra colonia o col, la clasifica como tal
+            elif palabra_actual in ["colonia", "col"]:
+                diccionario_vias["colonia"].append(siguiente_palabra)
+
+    # Devuelve el diccionario con las vías detectadas
+    return diccionario_vias
+
+
+# Función que une la extracción y calcula la confianza
+def crear_contrato(texto):
+    """Crear el contrato de salida del Extractor."""
+    # Ejecuta la extracción de días
+    dias = procesar_y_evaluar_dias(texto)
+    # Ejecuta la extracción de fecha
+    fecha = extraer_fecha(texto)
+    # Ejecuta la extracción de vías públicas
+    vias = extraer_vias_publicas(texto)
+
+    # Selecciona el primer día encontrado o asigna None si no hubo resultados
+    dia = list(dias.keys())[0] if dias else None
+    # Selecciona la primera calle encontrada o asigna None
+    calle = vias["calle"][0] if vias["calle"] else None
+    # Selecciona la primera avenida encontrada o asigna None
+    avenida = vias["avenida"][0] if vias["avenida"] else None
+    # Selecciona la primera colonia encontrada o asigna None
+    colonia = vias["colonia"][0] if vias["colonia"] else None
+
+# Asignación ponderada de confianza
+    confidence = 0.50
+    if fecha:
+        confidence += 0.15
+    if dia:
+        confidence += 0.10
+    if calle or avenida:
+        confidence += 0.15
+    if colonia:
+        confidence += 0.10
+
+    # Retorna el diccionario final estructurado como contrato JSON
+    return {
+        "date": fecha,
+        "day": dia,
+        "street": calle,
+        "avenue": avenida,
+        "neighborhood": colonia,
+        "confidence": round(confidence, 2)
+    }
+
+
+# Define la función para probar la ejecución local del script
+def main():
+    """Función principal de prueba."""
+    # Texto de prueba que simula una noticia
+    texto_noticia = """
+    El martes 15 de septiembre de 2026 se registró un accidente
+    sobre Avenida Reforma, en la calle Primera, colonia Centro.
+    """
+    # Procesa el texto de prueba con la función del contrato
+    resultado = crear_contrato(texto_noticia)
+    # Imprime el resultado transformado a JSON
+    print(json.dumps(resultado, ensure_ascii=False, indent=4))
+
+
+# Ejecutar main()
+if __name__ == "__main__":
+    main()
