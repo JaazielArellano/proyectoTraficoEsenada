@@ -54,15 +54,23 @@ Y algo que tengo que tener en cuenta para más adelante: Folium arma el mapa com
 Al ir probando el script por partes, quise confirmar qué tan cierto era eso de que "Folium solo no funciona en Streamlit" que había leído en la investigación. Así que desinstalé streamlit-folium a propósito y dejé solo streamlit, plotly, pandas y folium.
 
 Error que me marcó:
+<img width="1466" height="802" alt="ERROR " src="https://github.com/user-attachments/assets/88a03317-7da6-4822-9d5e-acc7d504cc20" />
 
 
 
 **Causa:** streamlit-folium no es parte de Streamlit ni de Folium, es un paquete aparte que hay que instalar explícitamente (`pip install streamlit-folium`). Si no está instalado, ni siquiera truena al momento de dibujar el mapa truena desde el import, antes de correr cualquier otra línea del script.
 
 **Solución:** reinstalar el paquete:
-pip install streamlit-folium
-
-Después de esto el import y el resto del script volvieron a correr sin problema.
+paso 1: en la terminal escribes pip install streamlit plotly pandas folium stramlit-foliun 
+ya despues que se descarge todo como en la imagen haces el siguiente paso 
+<img width="1470" height="756" alt="paso 1" src="https://github.com/user-attachments/assets/364b79db-7b47-43f0-b5b7-7023c057adfb" />
+paso 2: ya que este descargado completamente abajo escribes 
+streamlit run ejemplo_dashboard.py 
+<img width="1470" height="92" alt="paso 2" src="https://github.com/user-attachments/assets/9243a850-0a97-4eea-9d55-c9815df82b3b" />
+asi te saldra el Dashboard. en una ventana emergente 
+<img width="1392" height="710" alt="PROTOTIPO 3" src="https://github.com/user-attachments/assets/3bfd98de-51fc-4744-a555-3fdc97f3e904" />
+<img width="1482" height="667" alt="PROTOTIPO 2" src="https://github.com/user-attachments/assets/43ec966d-f109-4451-a341-b35cb70c19a7" />
+<img width="1442" height="787" alt="PROTOTIPO 1" src="https://github.com/user-attachments/assets/dbceea44-f69e-4a60-bafe-addcfb0ffa8a" />
 
 Esto confirma algo que había anotado en la sección de "Qué aprendí": Folium y streamlit-folium son dos librerías independientes, y ambas son obligatorias para que el mapa aparezca dentro de Streamlit  no es opcional ni redundante tenerlas por separado en el requirements.txt.
 
