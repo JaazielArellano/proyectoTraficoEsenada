@@ -26,7 +26,6 @@ print(urls)                                             # Muestra/Imprime los li
 #  GUARDAR NOTICIAS EN UN JSON 
 ################################
 
-
 def guardar_noticias(noticias):                                     # Funcion para guardar noticias 
     with open("noticias_ensenada.json", "w") as archivo:            # Abir un archivo para escribir información
           json.dump(
@@ -37,22 +36,14 @@ def guardar_noticias(noticias):                                     # Funcion pa
         )
 
 guardar_noticias(urls)
-
 with open("noticias_ensenada.json", "r") as archivo:
     datos = json.load(archivo)
-
-
-
+    
 print("Links extraidos RSS")
-
-
 print(urls)
 print("----"*30)
-
 print("Contenido del JSON")
 print(datos)
-
-
 
 ################################
 #  ACTUALIZAR NOTICIAS  
