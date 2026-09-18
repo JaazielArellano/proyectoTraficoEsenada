@@ -50,3 +50,17 @@ print(datos)
 ################################
 
 def actualizar_noticias(noticias):
+    nuevos_links=extractor_links()
+    noticias_guardadas=noticias
+    recientes=0
+    for link in nuevos_links:
+        if link not in noticias_guardadas:
+            noticias_guardadas.append(link)
+            recientes+=1
+            print("Estas son las nuevas noticias")
+            print(link)
+    guardar_noticias(noticias_guardadas)
+    print()
+    print("Noticias nuevas:", recientes)
+    print("Total de noticias guardadas:", len(noticias_guardadas))
+actualizar_noticias(datos)
