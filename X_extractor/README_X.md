@@ -1,20 +1,6 @@
 # Módulo Extractor para X (Twitter) Trabajo Extratron
+Alumno: Muñiz Tavarez Arturo
+Materia: Patrones de Comportamiento
+
 
 En mi módulo de Extractor X, mi codigo recibe el texto de una noticia que encuentre en X  y se encarga de buscar y extraer automáticamente 4 datos clave: fecha, día de la semana, calle y colonia. Tambien calcula un porcentaje de confianza para indicar qué tan completa viene la información.
-
-#Entradas y salidas del Código
-
-1.- Entrada
-El programa recibe un diccionario con el texto ya extraído de la publicación de X
-
-
-2.- Salida 
-Nos da de resultado un JSON con los datos que nos pidieron. Si no se encuentra alguno de los datos ese espacio se rellena como NULL
-
-Las herramientas que utilice fue:
--Python 3.13 
--App de X 
-
-Librerias:
--json
--datetime 
