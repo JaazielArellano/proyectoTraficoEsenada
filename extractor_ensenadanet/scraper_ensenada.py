@@ -3,61 +3,107 @@ Módulo scraper para extraer los títulos y enlaces de noticias
 del portal ensenada.net utilizando BeautifulSoup y requests.
 """
 
+import json
+import os
+import time
+import uuid
+from datetime import datetime
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
+# Configuración principal
+URL_BASE = "https://www.ensenada.net/"
+# 600 segundos = 10 minutos | pruebas con 10 segundos
+# (cambiar a 600 al momento de realizar la ejecución final)
+TIEMPO_ESPERA = 10
+ARCHIVO_PASADAS = "noticias_pasadas.json"
+ARCHIVO_NUEVAS = "noticias_nuevas.json"
 
-def obtener_notas_ensenadanet():
-    """
-    Conecta a la página principal de ensenada.net, extrae los títulos de las notas
-    y sus enlaces correspondientes, y devuelve una lista de diccionarios.
-    """
-    url_base = "https://ensenada.net/noticias/"
+def extraer_noticias():
+    """Conecta a ensenada.net y extrae los links con la estructura solicitada."""
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-    headers = {
-        'User-Agent': (
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-            'AppleWebKit/537.36 (KHTML, like Gecko) '
-            'Chrome/120.0.0.0 Safari/537.36'
-        )
-    }
+    try:
+        respuesta = requests.get(URL_BASE, headers=headers, timeout=10)
+        # Forzamos latin-1 para evitar problemas de caracteres extraños
+        respuesta.encoding = 'latin-1'
+        soup = BeautifulSoup(respuesta.text, "html.parser")
 
-    print("Conectando con ensenada.net...")
-    # Se agrega un timeout de 10 segundos
-    respuesta = requests.get(url_base, headers=headers, timeout=10)
-    respuesta.encoding = 'latin-1'
+        lista_noticias = []
 
-    soup = BeautifulSoup(respuesta.text, 'html.parser')
+        # Búsqueda de todas las etiquetas <a>
+        for etiqueta_a in soup.find_all("a", href=True):
+            href = etiqueta_a["href"]
+            texto = etiqueta_a.get_text(" ", strip=True)
 
-    spans_titulos = soup.find_all('span', class_='tituloNota')
+            # Filtro para ignorar links vacíos.
+            if texto:
+                full_url = urljoin(URL_BASE, href)
 
-    lista_noticias = []
+                lista_noticias.append({
+                    "id": str(uuid.uuid4()),
+                    "titulo": texto,
+                    "url": full_url,
+                    "retrieved_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                })
 
-    for span in spans_titulos:
-        titulo_limpio = span.text.strip()
+        return lista_noticias
 
-        etiqueta_a = span.find_parent('a')
+    except requests.RequestException as error:
+        print(f"❌ Error de conexión: {error}")
+        return []
 
-        if etiqueta_a and 'href' in etiqueta_a.attrs:
-            href_relativo = etiqueta_a['href']
+def cargar_historial(ruta_archivo):
+    """Carga el JSON de noticias viejas si existe."""
+    if os.path.exists(ruta_archivo):
+        try:
+            with open(ruta_archivo, "r", encoding="utf-8") as archivo:
+                return json.load(archivo)
+        except json.JSONDecodeError:
+            return []
+    return []
 
-            link_completo = urljoin(url_base, href_relativo)
+def guardar_json(ruta_archivo, datos):
+    """Sobreescribe un archivo JSON con los datos proporcionados."""
+    with open(ruta_archivo, "w", encoding="utf-8") as archivo:
+        json.dump(datos, archivo, ensure_ascii=False, indent=4)
 
-            lista_noticias.append({
-                "titulo": titulo_limpio,
-                "link": link_completo
-            })
+def ciclo_scraper():
+    """Ejecuta una ronda de extracción, comparación y guardado."""
+    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Escaneando ensenada.net...")
 
-    return lista_noticias
+    # 1. Cargar el historial acumulado
+    historial_pasadas = cargar_historial(ARCHIVO_PASADAS)
 
+    # Crear un 'set' de URLs pasadas para hacer la comparación súper rápida
+    urls_pasadas_set = {item["url"] for item in historial_pasadas}
+
+    # 2. Extraer las noticias actuales de la página
+    noticias_actuales = extraer_noticias()
+    noticias_nuevas = []
+
+    # 3. Filtrar cuáles son realmente nuevas
+    for noticia in noticias_actuales:
+        if noticia["url"] not in urls_pasadas_set:
+            noticias_nuevas.append(noticia)
+            historial_pasadas.append(noticia) # Añadirla al historial para el futuro
+
+    # 4. Guardar los resultados en sus respectivos archivos
+    guardar_json(ARCHIVO_NUEVAS, noticias_nuevas)
+    guardar_json(ARCHIVO_PASADAS, historial_pasadas)
+
+    # 5. Reporte en terminal
+    print("✅ Extracción completada.")
+    print(f"📂 Noticias pasadas (historial total): {len(historial_pasadas)}")
+    print(f"🆕 Noticias nuevas encontradas: {len(noticias_nuevas)}")
 
 if __name__ == "__main__":
-    noticias_extraidas = obtener_notas_ensenadanet()
+    print("🚀 Iniciando servicio automatizado de extracción de enlaces...")
+    print("⚠️  Presiona Ctrl + C en la terminal para detenerlo.\n")
 
-    print(f"¡Se encontraron {len(noticias_extraidas)} noticias!\n")
-
-    for i, noticia in enumerate(noticias_extraidas[:5], 1):
-        print(f"Noticia {i}: {noticia['titulo']}")
-        print(f"Enlace: {noticia['link']}\n")
+    while True:
+        ciclo_scraper()
+        print("⏳ Esperando 10 minutos para la siguiente ejecución...")
+        time.sleep(TIEMPO_ESPERA)
