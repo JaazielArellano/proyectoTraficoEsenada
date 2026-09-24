@@ -1,13 +1,31 @@
+"""
+ejemplo_dashboard.py
 
+Script de ejemplo / prototipo para el componente de:
+"Mapa interactivo" del módulo Dashboard.
+
+Autor: Edgar Eduardo Lopez Orozco
+Proyecto: Proyecto Integrador de Extracción de Datos Geográficos (Ensenada)
+
+Este script usa DATOS SIMULADOS que respetan el contrato JSON acordado con
+el equipo (mismos campos que devolverá la API de PostgreSQL), más latitud/
+longitud simuladas (que en producción vendrán de la API de Catastro), solo
+para poder probar el mapa mientras esa integración no está lista.
+
+Cómo correrlo:
+    pip install streamlit pandas folium streamlit-folium
+    streamlit run ejemplo_dashboard.py
+"""
 
 import pandas as pd
-import plotly.express as px
 import folium
 import streamlit as st
 from streamlit_folium import st_folium
 
 
-# 1. Datos simulados (mock) 
+# 1. Datos simulados (mock) — mismos campos que el contrato JSON del proyecto
+#    + latitud/longitud simuladas (en el futuro vendrán de la API de Catastro)
+
 MOCK_DATA = [
     {"id": 1, "date": "2026-09-10", "day": "jueves", "street": "Avenida Reforma",
      "neighborhood": "Centro", "confidence": 0.92, "source": "fuente_web",
@@ -31,10 +49,10 @@ MOCK_DATA = [
 
 df = pd.DataFrame(MOCK_DATA)
 
-
 # 2. Configuración de página + filtro simple por colonia
-st.set_page_config(page_title="Dashboard - Ejemplo Gráficas y Mapa", layout="wide")
-st.title("Prototipo: Gráficas, Indicadores y Mapa")
+
+st.set_page_config(page_title="Dashboard - Mapa", layout="wide")
+st.title("Prototipo: Mapa Interactivo")
 st.caption("Datos simulados (mock) — pendiente de conectar a la API real de PostgreSQL/Catastro")
 
 colonias = ["Todas"] + sorted(df["neighborhood"].unique().tolist())
@@ -42,36 +60,10 @@ colonia_seleccionada = st.sidebar.selectbox("Filtrar por colonia", colonias)
 
 df_filtrado = df if colonia_seleccionada == "Todas" else df[df["neighborhood"] == colonia_seleccionada]
 
-
-# 3. Indicadores simples
-col1, col2, col3 = st.columns(3)
-col1.metric("Total de registros", len(df_filtrado))
-col2.metric("Confianza promedio", f"{df_filtrado['confidence'].mean():.2f}")
-col3.metric("Colonias distintas", df_filtrado["neighborhood"].nunique())
+st.write(f"Mostrando **{len(df_filtrado)}** registros en el mapa.")
 
 
-# 4. Gráficas con Plotly Express
-
-st.subheader("Registros por colonia")
-fig_barras = px.bar(
-    df_filtrado.groupby("neighborhood", as_index=False).size(),
-    x="neighborhood", y="size",
-    labels={"neighborhood": "Colonia", "size": "Cantidad de registros"},
-)
-st.plotly_chart(fig_barras, use_container_width=True)
-
-st.subheader("Evolución de registros por fecha")
-fig_linea = px.line(
-    df_filtrado.groupby("date", as_index=False).size(),
-    x="date", y="size", markers=True,
-    labels={"date": "Fecha", "size": "Cantidad de registros"},
-)
-st.plotly_chart(fig_linea, use_container_width=True)
-
-
-# 5. Mapa interactivo con Folium + streamlit-folium
-
-st.subheader("Mapa interactivo")
+# 3. Mapa interactivo con Folium + streamlit-folium
 
 if len(df_filtrado) > 0:
     centro_lat = df_filtrado["lat"].mean()
@@ -88,12 +80,11 @@ for _, fila in df_filtrado.iterrows():
         f"Confianza: {fila['confidence']}<br>"
         f"Fuente: {fila['source']}"
     )
-  
     folium.Marker(
         location=[fila["lat"], fila["lon"]],
         popup=folium.Popup(popup_html, max_width=250),
         tooltip=fila["street"],
         icon=folium.Icon(color="red" if fila["confidence"] < 0.7 else "green"),
     ).add_to(mapa)
- 
-st_folium(mapa, width=None, height=500)
+
+st_folium(mapa, width=None, height=550)
