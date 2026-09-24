@@ -8,9 +8,8 @@ Autor: Edgar Eduardo Lopez Orozco
 Proyecto: Proyecto Integrador de Extracción de Datos Geográficos (Ensenada)
 
 Este script usa DATOS SIMULADOS que respetan el contrato JSON acordado con
-el equipo (mismos campos que devolverá la API de PostgreSQL), más latitud/
-longitud simuladas (que en producción vendrán de la API de Catastro), solo
-para poder probar el mapa mientras esa integración no está lista.
+el equipo, más latitud/
+longitud simuladas, solo para poder probar el mapa mientras esa integración no está lista.
 
 Cómo correrlo:
     pip install streamlit pandas folium streamlit-folium
@@ -58,6 +57,8 @@ st.caption("Datos simulados (mock)  pendiente de conectar a la API real de Postg
 colonias = ["Todas"] + sorted(df["neighborhood"].unique().tolist())
 colonia_seleccionada = st.sidebar.selectbox("Filtrar por colonia", colonias)
 
+# Hace la Filtracion del  DataFrame según la colonia elegida por el usuario.
+# Si eligió "Todas", se usan todos los registros; si no, solo los de esa colonia.
 if colonia_seleccionada == "Todas":
     df_filtrado = df
 else:
@@ -78,10 +79,10 @@ mapa = folium.Map(location=[centro_lat, centro_lon], zoom_start=13, tiles="OpenS
 
 for _, fila in df_filtrado.iterrows():
     popup_html = (
-         "<b>{fila['street']}</b><br>"
-         "Colonia: {fila['neighborhood']}<br>"
-         "Confianza: {fila['confidence']}<br>"
-         "Fuente: {fila['source']}"
+         f"<b>{fila['street']}</b><br>"
+         f"Colonia: {fila['neighborhood']}<br>"
+         f"Confianza: {fila['confidence']}<br>"
+         f"Fuente: {fila['source']}"
     )
     folium.Marker(
         location=[fila["lat"], fila["lon"]],
