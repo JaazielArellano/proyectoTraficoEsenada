@@ -7,7 +7,7 @@ url_api = "https://relax-albatross-pessimism.ngrok-free.dev/urls"               
 with open("noticias_nuevas_ensenada.json", "r", encoding="utf-8") as archivo:                  # Cargar el archivo JSON guardado
     contenido_json = json.load(archivo)
 
-headers = {                                                                                    # Definir los encabezados requeridos (incluye la exención de ngrok)
+headers = {                                                                                    # Definir los encabezados requeridos 
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "69420"
 }
