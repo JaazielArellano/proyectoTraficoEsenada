@@ -13,7 +13,7 @@ headers = {                                                                     
 }
 
 try:
-    respuesta = requests.post(url_api, json=contenido_json, headers=headers, timeout=10)        # Enviar la petición POST
+    respuesta = requests.post(url_api, json=contenido_json, headers=headers, timeout=10)        # Enviar la peticion POST
 
     print(f"Estado HTTP: {respuesta.status_code}")                                              # Mostrar resultados
     print(f"Respuesta del servidor: {respuesta.text}")
