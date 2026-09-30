@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import time
 
 #############################
     # WEBSCRAPING / Extractor 
 #############################
-
 def extractor_links():
     rss_url = "https://www.ensenada.gob.mx/?feed=rss2"  # URL del RSS de la pagina web
     #respuesta = requests.get(RSS_URL)
@@ -18,14 +18,10 @@ def extractor_links():
      if link:
         lista_links.append(link.text)                   # Guarda los links en la lista
     return lista_links                                  # Regresa la lista de links
-urls= extractor_links()                                 # Ejecuta la funcion que extrae los links 
-print(urls)                                             # Muestra/Imprime los links guardados en la lista
-
 
 ################################
 #  GUARDAR NOTICIAS EN UN JSON 
 ################################
-
 def guardar_noticias(noticias):                                     # Funcion para guardar noticias 
     with open("noticias_ensenada.json", "w") as archivo:            # Abir un archivo para escribir información
           json.dump(
@@ -35,32 +31,57 @@ def guardar_noticias(noticias):                                     # Funcion pa
             indent=4
         )
 
-guardar_noticias(urls)
-with open("noticias_ensenada.json", "r") as archivo:
-    datos = json.load(archivo)
-    
-print("Links extraidos RSS")
-print(urls)
-print("----"*30)
-print("Contenido del JSON")
-print(datos)
-
 ################################
 #  ACTUALIZAR NOTICIAS  
 ################################
-
 def actualizar_noticias(noticias):
     nuevos_links=extractor_links()
     noticias_guardadas=noticias
-    recientes=0
+    noticias_nuevas=[]                                                                  # Aqui guardaremos solo los links nuevos
+
     for link in nuevos_links:
         if link not in noticias_guardadas:
-            noticias_guardadas.append(link)
-            recientes+=1
-            print("Estas son las nuevas noticias")
-            print(link)
+            noticias_guardadas.append(link)                                             # Agregamos al historial de noticias
+            noticias_nuevas.append(link)                                                # Agregar las noticias nuevas
     guardar_noticias(noticias_guardadas)
+
+    if noticias_nuevas:
+     print("Estas son las nuevas noticias:")
+     for link in noticias_nuevas:
+        print(link)
+        with open("noticias_nuevas.json", "w", encoding="utf-8") as archivo:                     # Guarda por separado unicamente las noticias nuevas
+            json.dump(noticias_nuevas, archivo, ensure_ascii=False, indent=4)
+
+    else:
+        print("No se encontraron noticias nuevas.")
     print()
-    print("Noticias nuevas:", recientes)
-    print("Total de noticias guardadas:", len(noticias_guardadas))
-actualizar_noticias(datos)
+    print("Noticias nuevas:", len(noticias_nuevas))                                              # Nos muestra si hay nuevas noticias
+    print("Total de noticias guardadas:", len(noticias_guardadas))                               # Total de noticias guardadas 
+
+while True:
+    with open("noticias_historial_ensenada.json", "r", encoding="utf-8") as archivo:             # Leer el historial cada vez que se revisan las noticias
+        datos = json.load(archivo)
+    actualizar_noticias(datos)                                                                   # Revisar el RSS y guardar los links nuevos
+    print()
+    print("Esperando para volver a revisar...")
+    print()
+    time.sleep(60)                                                                               # Esperar 1 min antes de repetir el proceso 
+
+url_api = "https://relax-albatross-pessimism.ngrok-free.dev/urls"                              # URL exacta de la API con su endpoint correspondiente
+
+
+with open("noticias_nuevas_ensenada.json", "r", encoding="utf-8") as archivo:                  # Cargar el archivo JSON guardado
+    contenido_json = json.load(archivo)
+
+headers = {                                                                                    # Definir los encabezados requeridos (incluye la exención de ngrok)
+    "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "69420"
+}
+
+try:
+    respuesta = requests.post(url_api, json=contenido_json, headers=headers, timeout=10)        # Enviar la petición POST
+
+    print(f"Estado HTTP: {respuesta.status_code}")                                              # Mostrar resultados
+    print(f"Respuesta del servidor: {respuesta.text}")
+except requests.RequestException as error:
+    print(f"Error al conectar con la API: {error}")
