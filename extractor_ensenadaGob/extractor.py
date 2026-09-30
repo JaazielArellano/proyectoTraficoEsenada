@@ -23,7 +23,7 @@ def extractor_links():
 #  GUARDAR NOTICIAS EN UN JSON 
 ################################
 def guardar_noticias(noticias):                                     # Funcion para guardar noticias 
-    with open("noticias_ensenada.json", "w") as archivo:            # Abir un archivo para escribir información
+    with open("noticias_ensenada.json", "w") as archivo:            # Abir un archivo para escribir informacion
           json.dump(
             noticias,
             archivo,
