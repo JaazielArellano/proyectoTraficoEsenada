@@ -1,19 +1,14 @@
 """
 ejemplo_dashboard.py
 
-Script de ejemplo prototipo para el componente de:
-"Mapa interactivo" del módulo Dashboard.
+Prototipo del componente "Mapa interactivo" del módulo Dashboard.
 
 Autor: Edgar Eduardo Lopez Orozco
 Proyecto: Proyecto Integrador de Extracción de Datos Geográficos (Ensenada)
 
-Este script usa DATOS SIMULADOS que respetan el contrato JSON acordado con
-el equipo, más latitud/
-longitud simuladas, solo para poder probar el mapa mientras esa integración no está lista.
-
 Cómo correrlo:
     pip install streamlit pandas folium streamlit-folium
-    streamlit run ejemplo_dashboard.py
+    streamlit run ejemplo_dashboard_v3.py
 """
 
 import pandas as pd
@@ -23,7 +18,6 @@ from streamlit_folium import st_folium
 
 
 # 1. Datos simulados (mock) mismos campos que el contrato JSON del proyecto
-#    + latitud/longitud simuladas en el futuro vendrán de la API de Catastro
 
 MOCK_DATA = [
     {"id": 1, "date": "2026-09-10", "day": "jueves", "street": "Avenida Reforma",
@@ -48,6 +42,12 @@ MOCK_DATA = [
 
 df = pd.DataFrame(MOCK_DATA)
 
+# NUEVO: lista para guardar las notas que escribas.
+# Se crea una sola vez; así no se borra cada vez que haces clic en algo.
+if "notas" not in st.session_state:
+    st.session_state.notas = []
+
+
 # 2. Configuración de página + filtro simple por colonia
 
 st.set_page_config(page_title="Dashboard - Mapa", layout="wide")
@@ -57,12 +57,15 @@ st.caption("Datos simulados (mock)  pendiente de conectar a la API real de Postg
 colonias = ["Todas"] + sorted(df["neighborhood"].unique().tolist())
 colonia_seleccionada = st.sidebar.selectbox("Filtrar por colonia", colonias)
 
-# Hace la Filtracion del  DataFrame según la colonia elegida por el usuario.
-# Si eligió "Todas", se usan todos los registros; si no, solo los de esa colonia.
+# Filtrar el DataFrame según la colonia elegida por el usuario.
 if colonia_seleccionada == "Todas":
     df_filtrado = df
 else:
-    df_filtrado = df[df["neighborhood"] == colonia_seleccionada]
+    # 1. Reviso fila por fila: ¿la colonia es la que eligió el usuario? (Sí/No)
+    es_la_colonia_elegida = df["neighborhood"] == colonia_seleccionada
+
+    # 2. Me quedo solo con las filas que dijeron "Sí"
+    df_filtrado = df[es_la_colonia_elegida]
 
 st.write("Mostrando registros en el mapa.")
 
@@ -73,10 +76,26 @@ if len(df_filtrado) > 0:
     centro_lat = df_filtrado["lat"].mean()
     centro_lon = df_filtrado["lon"].mean()
 else:
-    centro_lat, centro_lon = 31.8667, -116.5964 
+    centro_lat, centro_lon = 31.8667, -116.5964
 
-mapa = folium.Map(location=[centro_lat, centro_lon], zoom_start=13, tiles="OpenStreetMap")
+# CAMBIO 1 (satélite y cartografía):
+# tiles=None crea el mapa sin fondo, y abajo le agregamos dos fondos.
+mapa = folium.Map(location=[centro_lat, centro_lon], zoom_start=13, tiles=None)
 
+# Fondo 1: cartografía (calles)
+folium.TileLayer("OpenStreetMap", name="Cartografía (calles)").add_to(mapa)
+
+# Fondo 2: satélite
+folium.TileLayer(
+    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attr="Esri",
+    name="Satélite",
+).add_to(mapa)
+
+# Botón en el mapa para cambiar entre cartografía y satélite
+folium.LayerControl().add_to(mapa)
+
+# Marcadores de los registros
 for _, fila in df_filtrado.iterrows():
     popup_html = (
          f"<b>{fila['street']}</b><br>"
@@ -91,4 +110,39 @@ for _, fila in df_filtrado.iterrows():
         icon=folium.Icon(color="red" if fila["confidence"] < 0.7 else "green"),
     ).add_to(mapa)
 
-st_folium(mapa, width=None, height=550)
+# NUEVO: marcadores azules para las notas que ya guardaste
+for nota in st.session_state.notas:
+    folium.Marker(
+        location=[nota["lat"], nota["lon"]],
+        popup=f"<b>{nota['calle']}</b><br>{nota['texto']}",
+        tooltip=nota["calle"],
+        icon=folium.Icon(color="blue"),
+    ).add_to(mapa)
+
+# Dibuja el mapa. La variable "resultado" guarda lo que hizo el usuario en él (por ejemplo, le das un clic).
+resultado = st_folium(mapa, width=None, height=550)
+
+
+# 4. CAMBIO 2 agregar una nota con un clic en el mapa
+
+# Si el usuario hizo clic en el mapa, aquí viene la latitud y longitud del clic.
+clic = resultado.get("last_clicked")
+
+if clic:
+    st.write(f"Punto seleccionado: {clic['lat']:.5f}, {clic['lng']:.5f}")
+
+    calle = st.text_input("Nombre de la calle")
+    texto = st.text_area("Noticia o dato")
+
+    if st.button("Guardar nota"):
+        # Guardamos la nota junto con el punto donde se hizo clic
+        st.session_state.notas.append({
+            "calle": calle,
+            "texto": texto,
+            "lat": clic["lat"],
+            "lon": clic["lng"],
+        })
+        # Vuelve a correr el script para que el marcador azul aparezca en el mapa
+        st.rerun()
+else:
+    st.info("Haz clic en un punto del mapa para agregar una noticia o dato.")
