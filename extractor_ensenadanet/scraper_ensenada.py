@@ -52,7 +52,7 @@ def extraer_noticias():
         return lista_noticias
 
     except requests.RequestException as error:
-        print(f"❌ Error de conexión: {error}")
+        print(f"Error de conexión: {error}")
         return []
 
 def cargar_historial(ruta_archivo):
@@ -77,7 +77,7 @@ def ciclo_scraper():
     # 1. Cargar el historial acumulado
     historial_pasadas = cargar_historial(ARCHIVO_PASADAS)
 
-    # Crear un 'set' de URLs pasadas para hacer la comparación súper rápida
+    # Crear un 'set' de URLs pasadas para hacer la comparación
     urls_pasadas_set = {item["url"] for item in historial_pasadas}
 
     # 2. Extraer las noticias actuales de la página
@@ -95,15 +95,15 @@ def ciclo_scraper():
     guardar_json(ARCHIVO_PASADAS, historial_pasadas)
 
     # 5. Reporte en terminal
-    print("✅ Extracción completada.")
-    print(f"📂 Noticias pasadas (historial total): {len(historial_pasadas)}")
-    print(f"🆕 Noticias nuevas encontradas: {len(noticias_nuevas)}")
+    print("Extracción completada.")
+    print(f"Noticias pasadas (historial total): {len(historial_pasadas)}")
+    print(f"Noticias nuevas encontradas: {len(noticias_nuevas)}")
 
 if __name__ == "__main__":
-    print("🚀 Iniciando servicio automatizado de extracción de enlaces...")
-    print("⚠️  Presiona Ctrl + C en la terminal para detenerlo.\n")
+    print("Iniciando servicio automatizado de extracción de enlaces...")
+    print("Presiona Ctrl + C en la terminal para detenerlo.\n")
 
     while True:
         ciclo_scraper()
-        print("⏳ Esperando 10 minutos para la siguiente ejecución...")
+        print("Esperando 10 minutos para la siguiente ejecución...")
         time.sleep(TIEMPO_ESPERA)
