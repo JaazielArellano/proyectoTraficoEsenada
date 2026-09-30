@@ -24,4 +24,3 @@ try:
 
 except requests.RequestException as error:
     print(f"Error al conectar con la API: {error}")
-    
