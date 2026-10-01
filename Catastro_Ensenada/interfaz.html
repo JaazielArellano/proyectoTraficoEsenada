@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catastro de Ensenada</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:#fff8fb;color:#3d3038}
+header{background:linear-gradient(135deg,#d77da5,#efb8cf);padding:38px 20px;text-align:center;color:white}
+header h1{margin:0;font-size:34px} header p{margin:8px 0 0;font-size:16px}
+.contenedor{width:92%;max-width:800px;margin:40px auto}.seccion{background:white;padding:30px;border-radius:18px;box-shadow:0 4px 15px rgba(0,0,0,.07)}
+.seccion h2{margin-top:0;color:#5a3c49}.subtitulo{color:#8c7480;margin-bottom:20px}.fila{display:flex;gap:10px}
+input{flex:1;padding:14px;border:1px solid #e9b7cc;border-radius:11px;outline:none;font-size:15px}input:focus{border-color:#d77da5;box-shadow:0 0 0 3px rgba(215,125,165,.12)}
+button{padding:14px 25px;border:0;border-radius:11px;background:#d77da5;color:white;font-size:15px;cursor:pointer;font-weight:bold}button:hover{background:#c66791}
+#resultado{margin-top:22px}.tarjeta{padding:22px;border-radius:15px;border-left:5px solid #d77da5;background:#fff8fb}.tarjeta h3{margin:7px 0;color:#74445a}.etiqueta{display:inline-block;background:#f8dce8;color:#99506f;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold}
+.si{border-left-color:#58a66a}.no{border-left-color:#c85c72}footer{text-align:center;padding:25px;color:#917583;font-size:14px}@media(max-width:650px){.fila{flex-direction:column}button,input{width:100%}}
+</style>
+</head>
+<body>
+<header><h1>Catastro de Ensenada</h1><p>Consulta de existencia de calles</p></header>
+<div class="contenedor">
+<section class="seccion">
+<h2>🔎 Consultar calle</h2>
+<p class="subtitulo">Escribe el nombre de una calle para verificar si se encuentra registrada.</p>
+<div class="fila"><input id="nombre" type="text" placeholder="Ej. Reforma"><button id="buscar">Buscar</button></div>
+<div id="resultado"><div class="tarjeta"><span class="etiqueta">CONSULTA</span><h3>Escribe una calle</h3><p>El sistema responderá verdadero o falso.</p></div></div>
+</section></div>
+<footer>API de Catastro de Ensenada · 2026</footer>
+<script>
+const API=window.location.origin;
+async function consultar(){
+ const nombre=document.getElementById('nombre').value.trim(); const resultado=document.getElementById('resultado');
+ if(nombre===''){resultado.innerHTML='<div class="tarjeta"><span class="etiqueta">AVISO</span><h3>Escribe el nombre de una calle</h3></div>';return;}
+ try{
+  const respuesta=await fetch(`${API}/calle?nombre=${encodeURIComponent(nombre)}`);
+  if(!respuesta.ok) throw new Error('No se pudo realizar la consulta');
+  const datos=await respuesta.json();
+  if(datos.existe){resultado.innerHTML=`<div class="tarjeta si"><span class="etiqueta">VERDADERO</span><h3>✅ La calle ${nombre} sí existe</h3></div>`;}
+  else{resultado.innerHTML=`<div class="tarjeta no"><span class="etiqueta">FALSO</span><h3>❌ La calle ${nombre} no existe</h3></div>`;}
+ }catch(error){resultado.innerHTML=`<div class="tarjeta no"><span class="etiqueta">ERROR</span><h3>${error.message}</h3></div>`;}
+}
+document.getElementById('buscar').addEventListener('click',consultar);
+document.getElementById('nombre').addEventListener('keydown',e=>{if(e.key==='Enter')consultar();});
+</script>
+</body>
+</html>
