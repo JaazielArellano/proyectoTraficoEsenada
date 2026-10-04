@@ -1,4 +1,4 @@
-"""Módulo para extraer datos del portal El Vigía."""
+"""Módulo para extraer datos de la página de El Vigía."""
 
 # Importa el módulo json
 import json
@@ -85,12 +85,12 @@ def extraer_fecha(texto):
                 p_de1 = palabras[i + 1].strip(",.:;")
                 # Extrae el posible nombre del mes
                 mes = palabras[i + 2].strip(",.:;")
-                # Extrae la segunda palabra uníon (debería ser "de")
+                # Extrae la segunda palabra unión (debería ser "de")
                 p_de2 = palabras[i + 3].strip(",.:;")
                 # Extrae el año
                 año = palabras[i + 4].strip(",.:;")
 
-                # Confirma que la estructura tenga "de (mes) de"
+                # Confirms que la estructura tenga "de (mes) de"
                 if p_de1 == "de" and mes in meses and p_de2 == "de":
                     # Valida que el año sea numérico y tenga 4 dígitos
                     if año.isdigit() and len(año) == 4:
@@ -160,7 +160,7 @@ def crear_contrato(texto):
     # Selecciona la primera colonia encontrada o asigna None
     colonia = vias["colonia"][0] if vias["colonia"] else None
 
-# Asignación ponderada de confianza
+    # Asignación ponderada de confianza
     confidence = 0.50
     if fecha:
         confidence += 0.15
@@ -182,9 +182,9 @@ def crear_contrato(texto):
     }
 
 
-# Define la función para probar la ejecución local del script
-def main():
-    """Función principal de prueba."""
+# Define la función para la ejecución modular del script como librería
+def ejecutar():
+    """Función principal expuesta como librería para ser llamada desde main.py."""
     # Texto de prueba que simula una noticia
     texto_noticia = """
     El martes 15 de septiembre de 2026 se registró un accidente
@@ -196,6 +196,6 @@ def main():
     print(json.dumps(resultado, ensure_ascii=False, indent=4))
 
 
-# Ejecutar main()
+# Ejecutar cuando se llama directamente
 if __name__ == "__main__":
-    main()
+    ejecutar()

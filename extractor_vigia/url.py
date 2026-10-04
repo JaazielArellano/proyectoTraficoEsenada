@@ -99,31 +99,32 @@ def guardar_json(nombre, datos):
         json.dump(datos, f, ensure_ascii=False, indent=4)
 
 
-# Ejecución
-cache = cargar_json("cache.json")
-nuevos = []
+def ejecutar():
+    """Ejecuta la extracción de enlaces y actualiza los archivos JSON."""
+    cache = cargar_json("cache.json")
+    nuevos = []
 
-links_actuales = extractor_links()
-urls_cache = {item["url"] for item in cache if isinstance(item, dict) and "url" in item}
+    links_actuales = extractor_links()
+    urls_cache = {item["url"] for item in cache if isinstance(item, dict) and "url" in item}
 
-for item in links_actuales:
-    if item["url"] not in urls_cache:
-        nuevos.append(item)
-        cache.append(item)
+    for item in links_actuales:
+        if item["url"] not in urls_cache:
+            nuevos.append(item)
+            cache.append(item)
 
-print("\n--- Resumen de extracción ---")
-print(f"Links viejos (historial en cache): {len(cache) - len(nuevos)}")
-print(f"Links totalmente nuevos: {len(nuevos)}")
+    print("\n--- Resumen de extracción ---")
+    print(f"Links viejos (historial en cache): {len(cache) - len(nuevos)}")
+    print(f"Links totalmente nuevos: {len(nuevos)}")
 
-# 1. Guardar datos en urls.json y cache.json
-guardar_json("urls.json", nuevos)
-guardar_json("cache.json", cache)
+    # 1. Guardar datos en urls.json y cache.json
+    guardar_json("urls.json", nuevos)
+    guardar_json("cache.json", cache)
 
-# 2. Guardar solo la lista de cadenas de texto de las URLs nuevas en el formato requerido
-lista_solo_urls = [item["url"] for item in nuevos]
-formato_simple_urls = {
-    "urls": lista_solo_urls
-}
-guardar_json("nuevas_urls.json", formato_simple_urls)
+    # 2. Guardar solo la lista de cadenas de texto de las URLs nuevas en el formato requerido
+    lista_solo_urls = [item["url"] for item in nuevos]
+    formato_simple_urls = {
+        "urls": lista_solo_urls
+    }
+    guardar_json("nuevas_urls.json", formato_simple_urls)
 
-print("Archivos 'urls.json', 'cache.json' y 'nuevas_urls.json' actualizados exitosamente.")
+    print("Archivos 'urls.json', 'cache.json' y 'nuevas_urls.json' actualizados exitosamente.")

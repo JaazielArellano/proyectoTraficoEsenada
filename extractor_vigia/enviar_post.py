@@ -7,7 +7,7 @@ petición POST.
 import json
 import requests
 
-# URL exacta de la API con su endpoint correspondiente (nombre en MAYÚSCULAS)
+# URL exacta de la API con su endpoint correspondiente
 URL_API = "https://relax-albatross-pessimism.ngrok-free.dev/urls"
 
 
@@ -35,6 +35,11 @@ def enviar_peticion():
 
     except requests.RequestException as error:
         print(f"Error al conectar con la API: {error}")
+
+
+def ejecutar():
+    """Función para ser llamada como librería desde main.py."""
+    enviar_peticion()
 
 
 if __name__ == "__main__":
