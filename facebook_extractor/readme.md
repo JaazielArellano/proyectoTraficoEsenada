@@ -40,3 +40,5 @@ Herramientas utilizadas
 | Datetime | Ayuda a calcular qué día de la semana cayó la fecha encontrada (lunes, martes, etc.) y le pone el año correcto. |
 | JSON | Es el formato final en el que se guardan y entregan los datos ordenados para que los demás módulos del sistema puedan entenderlos. |
 
+imagenes
+
