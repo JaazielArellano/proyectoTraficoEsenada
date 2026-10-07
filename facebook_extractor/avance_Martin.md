@@ -78,3 +78,6 @@ SEMANA 2
 
 Inicialmente desarrollé un código utilizando web scraping tradicional, pero no era la mejor opción. Por ello, lo reestructuré para realizar peticiones HTTP mediante requests e integrar la API de Apify utilizando un token de autenticación. Adicionalmente, implementé un sistema de cache local para evitar la duplicación de enlaces y garantizar que mis compañeras reciban únicamente información nueva en cada ejecución.
 
+SEMANA 3
+Verifique que el codigo tuviera las especificaciones que el maestro había pedido, solo falta corregir bien el readme para explicar como correr el codigo y saber que hacen algunos pedazos de codigo
+
