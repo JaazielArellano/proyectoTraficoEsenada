@@ -50,22 +50,15 @@ Necesitas:
 Instalar las dependencias:
 
 
-pip install streamlit pandas folium streamlit-folium
-
+pip install streamlit pandas folium streamlit-folium
+
 Ejecutar:
 
 
-streamlit run ejemplo_dashboard.py
-
-Esto abre automáticamente la app en tu navegador (normalmente en http://localhost:8501), donde puedes ver el mapa, filtrar por colonia, cambiar entre cartografía/satélite, y agregar notas con un clic.
-Estructura del Proyecto
-proyectoTraficoEsenada/
-└── dashboard/                 ← este componente
-    ├── README.md               ← este archivo
-    ├── Avance.md                ← bitácora de avance semanal
-    ├── DESIGN_DOC.md            ← documento de diseño técnico (Goals/Non-Goals/Background)
-    └── ejemplo_dashboard.py     ← script de ejemplo funcional del mapa (prototipo)
-
+streamlit run ejemplo_dashboard.py
+
+Esto abre automáticamente la app en tu navegador (normalmente en http://localhost:4001), donde puedes ver el mapa, filtrar por colonia, cambiar entre cartografía/satélite, y agregar notas con un clic.
+
 Nota: esta es la estructura de mi componente individual. El resto de las carpetas del repositorio corresponden a los módulos de mis compañeros de equipo.
 Estado actual
 En investigación / prototipo inicial. Aún no está conectado a los datos reales del sistema (se está trabajando con datos simulados que respetan el contrato JSON acordado).
