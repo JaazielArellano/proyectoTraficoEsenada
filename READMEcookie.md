@@ -73,7 +73,7 @@ ALTER ROLE hola WITH NOSUPERUSER;
 <img width="1335" height="495" alt="comandos" src="https://github.com/user-attachments/assets/268c50cc-26ca-47cd-87cf-4d81623ba343" />
 
 Parte 2
-Ahora hicimos lo mismo practimcaente pero ahora fue desde supabase
+Ahora hicimos lo mismo practicamente pero ahora fue desde supabase
 La idea principal era que una persona tuviera el control de la base de datos y pudiera crear usuarios para los demás alumnos, decidiendo qué podía hacer cada uno.
 
 Primero se decidió utilizar Supabase porque utiliza PostgreSQL y permite administrar una base de datos desde Internet.
