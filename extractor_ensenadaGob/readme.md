@@ -53,6 +53,7 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
 
  Funciones Principales:
+ 
 1.Extraer noticias: Obtiene los enlaces de las noticias desde el RSS del Gobierno de Ensenada.
 
 2.Detectar noticias nuevas: Compara los enlaces obtenidos con un historial para identificar cuales son nuevos.
