@@ -23,19 +23,33 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
 
 -[x] Python
+
 -[x] Requests
+
 -[x] BeautifulSoup
+
 -[x] JSON
+
 -[x] Expresiones regulares (`re`)
+
 -[x] Git / GitHub
+
 -[ ] HTML5
+
 -[ ] CSS3
+
 -[ ] JavaScript
+
 -[ ] React
+
 -[ ] Node.js
+
 -[ ] MySQL
+
 -[ ] MongoDB
+
 -[ ] Otra
+
 
 
  Funciones Principales:
@@ -52,9 +66,13 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
 proyecto/
 │
+
 ├── main.py
+
 ├── enviar_links.py
+
 ├── procesador_texto.py
-│
+
 ├── noticias_historial_ensenada.json
+
 └── noticias_nuevas_ensenada.json
