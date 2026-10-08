@@ -10,7 +10,7 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
 
  Objetivos
-- Objetivo general: Automatizar la extraccion y procesamiento de noticias del Gobierno de Ensenada para obtener infformacion de cada noticia.
+- Objetivo general: Automatizar la extraccion y procesamiento de noticias del Gobierno de Ensenada para obtener informacion de cada noticia.
 
 - Objetivos especificos:
   - Extraer los enlaces de las noticias mediante el RSS del Gobierno de Ensenada.
