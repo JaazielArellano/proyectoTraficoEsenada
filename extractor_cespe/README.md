@@ -13,14 +13,6 @@ Este módulo forma parte del sistema de monitoreo de tráfico e incidencias para
 
 ## 🛠️ Tecnologías Utilizadas
 - [x] Python
-- [ ] HTML5
-- [ ] CSS3
-- [ ] JavaScript
-- [ ] React
-- [ ] Node.js
-- [ ] Java
-- [ ] MySQL
-- [ ] MongoDB
 - [x] Git / GitHub
 - [x] Librerías Python (`requests`, `json`, `re`, `os`)
 
