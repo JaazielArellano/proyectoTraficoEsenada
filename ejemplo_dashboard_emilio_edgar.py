@@ -1,5 +1,5 @@
 """
-ejemplo_dashboard.py
+ejemplo_dashboard_emilio_edgar.py
 
 Prototipo del componente "Mapa interactivo" del módulo Dashboard.
 
