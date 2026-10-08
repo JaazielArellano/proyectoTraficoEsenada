@@ -50,13 +50,13 @@ Necesitas:
 Instalar las dependencias:
 
 
-pip install streamlit pandas folium streamlit-folium
-
+pip install streamlit pandas folium streamlit-folium
+
 Ejecutar:
 
 
-streamlit run ejemplo_dashboard.py
-
+streamlit run ejemplo_dashboard.py
+
 Esto abre automáticamente la app en tu navegador (normalmente en http://localhost:4001), donde puedes ver el mapa, filtrar por colonia, cambiar entre cartografía/satélite, y agregar notas con un clic.
 
 Nota: esta es la estructura de mi componente individual. El resto de las carpetas del repositorio corresponden a los módulos de mis compañeros de equipo.
