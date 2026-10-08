@@ -1,7 +1,7 @@
 Oliver Geovanni Gallegos Lobo
 Modulo: Extractor
 
- Extractor y Procesador de Noticias de Ensenada
+ Extractor y Procesador de Noticias de Ensenada.Gob
 
 
  Descripción del Proyecto:
