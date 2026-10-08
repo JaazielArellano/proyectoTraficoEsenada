@@ -8,7 +8,7 @@ Proyecto: Proyecto Integrador de Extracción de Datos Geográficos (Ensenada)
 
 Cómo correrlo:
     pip install streamlit pandas folium streamlit-folium
-    streamlit run Avance_conjunto.py
+    streamlit run ejemplo_dashboard_emilio_edgar.py
 """
 
 import pandas as pd
