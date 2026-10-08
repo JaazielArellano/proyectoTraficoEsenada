@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gráficas de puntos - Incidentes viales</title>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    h1 {
+      color: #2c3e50;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 10px;
+    }
+
+    h2 {
+      color: #555;
+      font-size: 18px;
+      margin: 40px 0 4px;
+    }
+
+    .nota {
+      font-size: 13px;
+      color: #777;
+      margin: 0 0 10px;
+    }
+
+    .contenedor-grafico {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .punto {
+      stroke: white;
+      stroke-width: 1px;
+      cursor: pointer;
+      transition: fill-opacity 0.2s;
+    }
+
+    .punto:hover {
+      fill-opacity: 1 !important;
+      stroke: #333;
+      stroke-width: 2px;
+    }
+
+    .titulo-eje {
+      font-size: 13px;
+      fill: #555;
+      text-anchor: middle;
+    }
+
+    .leyenda-texto {
+      font-size: 13px;
+      fill: #333;
+    }
+
+    .rejilla line {
+      stroke: #e5e8eb;
+    }
+
+    .rejilla .domain {
+      display: none;
+    }
+
+    .etiqueta-valor {
+      font-size: 12px;
+      font-weight: bold;
+      fill: #333;
+    }
+
+    .error-carga {
+      color: #c0392b;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Incidentes viales: gráficas de puntos</h1>
+
+  <h2>1. Retraso vs. longitud afectada (dispersión)</h2>
+  <p class="nota">Cada punto es un incidente. Color = impacto, tamaño = reducción de velocidad (%).</p>
+  <div class="contenedor-grafico" id="g-dispersion"></div>
+
+  <h2>2. Mapa de puntos por ubicación</h2>
+  <p class="nota">Posición = latitud y longitud. Color = categoría vial, tamaño = retraso estimado (min).</p>
+  <div class="contenedor-grafico" id="g-mapa"></div>
+
+  <h2>3. Retraso por alcaldía (puntos individuales y promedio)</h2>
+  <p class="nota">Puntos pequeños = incidentes, punto grande rojo = retraso promedio de la alcaldía.</p>
+  <div class="contenedor-grafico" id="g-alcaldia"></div>
+
+  <h2>4. Incidentes por día (línea de tiempo)</h2>
+  <p class="nota">Cada punto es la cantidad de incidentes de ese día. La línea punteada marca el 30 de septiembre.</p>
+  <div class="contenedor-grafico" id="g-tiempo"></div>
+
+  <h2>5. Matriz de burbujas: categoría × zona</h2>
+  <p class="nota">Tamaño y número = cantidad de incidentes. Color = retraso promedio (más oscuro = más retraso).</p>
+  <div class="contenedor-grafico" id="g-matriz"></div>
+
+  <script>
+    // ---------- Utilidades compartidas ----------
+    const ANCHO = 700;
+
+    const COLOR_IMPACTO = { "Alto": "#e74c3c", "Medio": "#f39c12", "Bajo": "#f1c40f" };
+
+    // Meses y días en español para el eje de fechas
+    const es = d3.timeFormatLocale({
+      dateTime: "%A, %e de %B de %Y, %X",
+      date: "%d/%m/%Y",
+      time: "%H:%M:%S",
+      periods: ["AM", "PM"],
+      days: ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
+      shortDays: ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"],
+      months: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+               "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+      shortMonths: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+    });
+
+    function crearSvg(selector, alto) {
+      return d3.select(selector)
+        .append("svg")
+        .attr("viewBox", `0 0 ${ANCHO} ${alto}`)
+        .attr("width", "100%")
+        .style("max-width", ANCHO + "px");
+    }
+
+    // Leyenda de colores: items = [{ nombre, color }]
+    function leyenda(svg, items, x, y) {
+      const g = svg.append("g").attr("transform", `translate(${x}, ${y})`);
+      items.forEach((it, i) => {
+        const fila = g.append("g").attr("transform", `translate(0, ${i * 24})`);
+        fila.append("circle").attr("cx", 7).attr("cy", 7).attr("r", 6).attr("fill", it.color);
+        fila.append("text").attr("class", "leyenda-texto").attr("x", 20).attr("y", 12).text(it.nombre);
+      });
+    }
+
+    // ---------- 1. DISPERSIÓN: retraso vs longitud afectada ----------
+    function dibujarDispersion(selector, datos) {
+      const alto = 450;
+      const margen = { top: 20, right: 130, bottom: 55, left: 55 };
+      const svg = crearSvg(selector, alto);
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(datos, d => d.trafico.longitud_afectada_km) * 1.05])
+        .range([margen.left, ANCHO - margen.right]);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(datos, d => d.trafico.retraso_estimado_min) * 1.1])
+        .range([alto - margen.bottom, margen.top]);
+
+      // scaleSqrt: el ÁREA del círculo es proporcional al valor (más fiel que el radio)
+      const r = d3.scaleSqrt()
+        .domain([0, d3.max(datos, d => d.trafico.reduccion_velocidad_pct)])
+        .range([3, 13]);
+
+      // Rejilla horizontal suave
+      svg.append("g")
+        .attr("class", "rejilla")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).tickSize(-(ANCHO - margen.left - margen.right)).tickFormat(""));
+
+      svg.selectAll(".punto")
+        .data(datos)
+        .join("circle")
+        .attr("class", "punto")
+        .attr("cx", d => x(d.trafico.longitud_afectada_km))
+        .attr("cy", d => y(d.trafico.retraso_estimado_min))
+        .attr("r", d => r(d.trafico.reduccion_velocidad_pct))
+        .attr("fill", d => COLOR_IMPACTO[d.trafico.impacto_nivel])
+        .attr("fill-opacity", 0.6)
+        .append("title")
+        .text(d =>
+          `${d.titulo}\n${d.ubicacion.calle_principal}, ${d.ubicacion.colonia}\n` +
+          `Retraso: ${d.trafico.retraso_estimado_min} min\n` +
+          `Longitud afectada: ${d.trafico.longitud_afectada_km} km\n` +
+          `Reducción de velocidad: ${d.trafico.reduccion_velocidad_pct}%`);
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${alto - margen.bottom})`)
+        .call(d3.axisBottom(x));
+      svg.append("g")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y));
+
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("x", (margen.left + ANCHO - margen.right) / 2).attr("y", alto - 12)
+        .text("Longitud afectada (km)");
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(alto - margen.bottom + margen.top) / 2).attr("y", 14)
+        .text("Retraso estimado (min)");
+
+      leyenda(svg,
+        Object.entries(COLOR_IMPACTO).map(([nombre, color]) => ({ nombre: "Impacto " + nombre, color })),
+        ANCHO - margen.right + 20, margen.top);
+    }
+
+    // ---------- 2. MAPA DE PUNTOS: latitud y longitud ----------
+    function dibujarMapa(selector, datos) {
+      const margen = { top: 20, right: 170, bottom: 40, left: 60 };
+      const anchoUtil = ANCHO - margen.left - margen.right;
+
+      // Márgenes de 5% para que los puntos no toquen el borde
+      const ext = (acc) => {
+        const [a, b] = d3.extent(datos, acc);
+        const pad = (b - a) * 0.05;
+        return [a - pad, b + pad];
+      };
+      const lonExt = ext(d => d.ubicacion.longitud);
+      const latExt = ext(d => d.ubicacion.latitud);
+
+      // Corrige la deformación: 1° de longitud mide menos que 1° de latitud
+      // (se multiplica por cos(latitud)). Así el mapa conserva su proporción.
+      const latMedia = (latExt[0] + latExt[1]) / 2;
+      const proporcion = ((lonExt[1] - lonExt[0]) * Math.cos(latMedia * Math.PI / 180)) / (latExt[1] - latExt[0]);
+      const altoUtil = anchoUtil / proporcion;
+      const alto = altoUtil + margen.top + margen.bottom;
+
+      const svg = crearSvg(selector, alto);
+
+      const x = d3.scaleLinear().domain(lonExt).range([margen.left, margen.left + anchoUtil]);
+      const y = d3.scaleLinear().domain(latExt).range([margen.top + altoUtil, margen.top]);
+
+      const categorias = Array.from(new Set(datos.map(d => d.categoria_vial))).sort();
+      const color = d3.scaleOrdinal(d3.schemeTableau10).domain(categorias);
+
+      const r = d3.scaleSqrt()
+        .domain([0, d3.max(datos, d => d.trafico.retraso_estimado_min)])
+        .range([3, 12]);
+
+      // Marco y rejilla
+      svg.append("rect")
+        .attr("x", margen.left).attr("y", margen.top)
+        .attr("width", anchoUtil).attr("height", altoUtil)
+        .attr("fill", "#f4f6f8");
+
+      svg.append("g").attr("class", "rejilla")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).ticks(5).tickSize(-anchoUtil).tickFormat(""));
+      svg.append("g").attr("class", "rejilla")
+        .attr("transform", `translate(0, ${margen.top + altoUtil})`)
+        .call(d3.axisBottom(x).ticks(5).tickSize(-altoUtil).tickFormat(""));
+
+      svg.selectAll(".punto")
+        .data(datos)
+        .join("circle")
+        .attr("class", "punto")
+        .attr("cx", d => x(d.ubicacion.longitud))
+        .attr("cy", d => y(d.ubicacion.latitud))
+        .attr("r", d => r(d.trafico.retraso_estimado_min))
+        .attr("fill", d => color(d.categoria_vial))
+        .attr("fill-opacity", 0.65)
+        .append("title")
+        .text(d =>
+          `${d.titulo}\n${d.ubicacion.calle_principal}\n${d.ubicacion.colonia}, ${d.ubicacion.alcaldia}\n` +
+          `Retraso: ${d.trafico.retraso_estimado_min} min`);
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${margen.top + altoUtil})`)
+        .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(".2f")));
+      svg.append("g")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format(".2f")));
+
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("x", margen.left + anchoUtil / 2).attr("y", alto - 6).text("Longitud");
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(margen.top + altoUtil / 2)).attr("y", 12).text("Latitud");
+
+      leyenda(svg,
+        categorias.map(c => ({ nombre: c, color: color(c) })),
+        ANCHO - margen.right + 20, margen.top);
+    }
+
+    // ---------- 3. RETRASO POR ALCALDÍA: puntos + promedio ----------
+    function dibujarAlcaldias(selector, datos) {
+      const margen = { top: 20, right: 50, bottom: 50, left: 150 };
+      const altoFila = 30;
+
+      // Agrupar retrasos por alcaldía y calcular el promedio
+      const grupos = Array.from(
+        d3.group(datos, d => d.ubicacion.alcaldia),
+        ([alcaldia, lista]) => ({
+          alcaldia,
+          lista,
+          promedio: d3.mean(lista, d => d.trafico.retraso_estimado_min)
+        })
+      ).sort((a, b) => b.promedio - a.promedio);
+
+      const alto = margen.top + grupos.length * altoFila + margen.bottom;
+      const svg = crearSvg(selector, alto);
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(datos, d => d.trafico.retraso_estimado_min) * 1.05])
+        .range([margen.left, ANCHO - margen.right]);
+
+      const y = d3.scaleBand()
+        .domain(grupos.map(g => g.alcaldia))
+        .range([margen.top, margen.top + grupos.length * altoFila])
+        .padding(0.2);
+
+      svg.append("g").attr("class", "rejilla")
+        .attr("transform", `translate(0, ${margen.top})`)
+        .call(d3.axisBottom(x).tickSize(grupos.length * altoFila).tickFormat(""));
+
+      // Línea guía de cada fila
+      svg.selectAll(".guia")
+        .data(grupos)
+        .join("line")
+        .attr("x1", margen.left).attr("x2", ANCHO - margen.right)
+        .attr("y1", g => y(g.alcaldia) + y.bandwidth() / 2)
+        .attr("y2", g => y(g.alcaldia) + y.bandwidth() / 2)
+        .attr("stroke", "#ddd");
+
+      // Puntos individuales (con un pequeño desplazamiento vertical para
+      // que los incidentes con el mismo retraso no queden encimados)
+      const individuales = grupos.flatMap(g =>
+        g.lista.map((d, i) => ({ d, alcaldia: g.alcaldia, i })));
+
+      svg.selectAll(".individual")
+        .data(individuales)
+        .join("circle")
+        .attr("class", "punto")
+        .attr("cx", p => x(p.d.trafico.retraso_estimado_min))
+        .attr("cy", p => y(p.alcaldia) + y.bandwidth() / 2 + ((p.i % 3) - 1) * 6)
+        .attr("r", 4)
+        .attr("fill", "#3498db")
+        .attr("fill-opacity", 0.4)
+        .append("title")
+        .text(p => `${p.d.titulo}\nRetraso: ${p.d.trafico.retraso_estimado_min} min`);
+
+      // Punto grande: promedio
+      svg.selectAll(".promedio")
+        .data(grupos)
+        .join("circle")
+        .attr("class", "punto")
+        .attr("cx", g => x(g.promedio))
+        .attr("cy", g => y(g.alcaldia) + y.bandwidth() / 2)
+        .attr("r", 9)
+        .attr("fill", "#e74c3c")
+        .append("title")
+        .text(g => `${g.alcaldia}\nPromedio: ${g.promedio.toFixed(1)} min (${g.lista.length} incidentes)`);
+
+      svg.selectAll(".etiqueta-valor")
+        .data(grupos)
+        .join("text")
+        .attr("class", "etiqueta-valor")
+        .attr("x", g => x(g.promedio))
+        .attr("y", g => y(g.alcaldia) - 2)
+        .attr("text-anchor", "middle")
+        .text(g => g.promedio.toFixed(0));
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${margen.top + grupos.length * altoFila})`)
+        .call(d3.axisBottom(x));
+
+      svg.append("g")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).tickSize(0)
+          .tickFormat(a => `${a} (${grupos.find(g => g.alcaldia === a).lista.length})`))
+        .call(g => g.select(".domain").remove());
+
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("x", (margen.left + ANCHO - margen.right) / 2).attr("y", alto - 10)
+        .text("Retraso estimado (min)");
+    }
+
+    // 4. LÍNEA DE TIEMPO: incidentes por día 
+    function dibujarTiempo(selector, datos) {
+      const alto = 380;
+      const margen = { top: 30, right: 30, bottom: 55, left: 50 };
+      const svg = crearSvg(selector, alto);
+
+      const parsear = d3.timeParse("%Y-%m-%d");
+      const clave = d3.timeFormat("%Y-%m-%d");
+
+      const conteo = d3.rollup(datos, v => v.length, d => d.fecha);
+      const fechas = datos.map(d => parsear(d.fecha));
+      const [fMin, fMax] = d3.extent(fechas);
+
+      // Incluir también los días sin incidentes (valor 0)
+      const dias = d3.timeDay.range(fMin, d3.timeDay.offset(fMax, 1))
+        .map(f => ({ fecha: f, valor: conteo.get(clave(f)) || 0 }));
+
+      const x = d3.scaleTime().domain([fMin, fMax]).range([margen.left, ANCHO - margen.right]);
+      const maxValor = d3.max(dias, d => d.valor);
+      const y = d3.scaleLinear().domain([0, maxValor * 1.2]).range([alto - margen.bottom, margen.top]);
+
+      svg.append("g").attr("class", "rejilla")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).ticks(Math.min(maxValor, 8)).tickSize(-(ANCHO - margen.left - margen.right)).tickFormat(""));
+
+      // Línea punteada: hoy (30 de septiembre de 2026)
+      const hoy = new Date(2026, 8, 30);
+      if (hoy >= fMin && hoy <= fMax) {
+        svg.append("line")
+          .attr("x1", x(hoy)).attr("x2", x(hoy))
+          .attr("y1", margen.top).attr("y2", alto - margen.bottom)
+          .attr("stroke", "#888").attr("stroke-dasharray", "5,4");
+        svg.append("text")
+          .attr("class", "leyenda-texto")
+          .attr("x", x(hoy) + 5).attr("y", margen.top + 4)
+          .text("Hoy");
+      }
+
+      svg.append("path")
+        .datum(dias)
+        .attr("fill", "none")
+        .attr("stroke", "#9b59b6")
+        .attr("stroke-width", 2)
+        .attr("d", d3.line().x(d => x(d.fecha)).y(d => y(d.valor)).curve(d3.curveMonotoneX));
+
+      svg.selectAll(".punto")
+        .data(dias)
+        .join("circle")
+        .attr("class", "punto")
+        .attr("cx", d => x(d.fecha))
+        .attr("cy", d => y(d.valor))
+        .attr("r", 5)
+        .attr("fill", d => d.valor === 0 ? "#bbb" : "#9b59b6")
+        .append("title")
+        .text(d => `${es.format("%A %d de %B")(d.fecha)}: ${d.valor} incidente(s)`);
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${alto - margen.bottom})`)
+        .call(d3.axisBottom(x).ticks(d3.timeWeek.every(1)).tickFormat(es.format("%d %b")));
+      svg.append("g")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).ticks(Math.min(maxValor, 8)).tickFormat(d3.format("d")));
+
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("x", (margen.left + ANCHO - margen.right) / 2).attr("y", alto - 10)
+        .text("Fecha");
+      svg.append("text").attr("class", "titulo-eje")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(alto - margen.bottom + margen.top) / 2).attr("y", 14)
+        .text("Incidentes");
+    }
+
+    // ---------- 5. MATRIZ DE BURBUJAS: categoría × zona ----------
+    function dibujarMatriz(selector, datos) {
+      const margen = { top: 20, right: 30, bottom: 100, left: 150 };
+      const ordenZonas = ["Norte", "Poniente", "Centro", "Oriente", "Sur"];
+
+      const zonas = ordenZonas.filter(z => datos.some(d => d.ubicacion.zona === z));
+      const categorias = Array.from(new Set(datos.map(d => d.categoria_vial))).sort();
+
+      const altoFila = 75;
+      const alto = margen.top + categorias.length * altoFila + margen.bottom;
+      const svg = crearSvg(selector, alto);
+
+      // Una celda por (categoría, zona) con conteo y retraso promedio
+      const celdas = [];
+      d3.group(datos, d => d.categoria_vial, d => d.ubicacion.zona).forEach((porZona, cat) => {
+        porZona.forEach((lista, zona) => {
+          celdas.push({
+            cat, zona,
+            n: lista.length,
+            promedio: d3.mean(lista, d => d.trafico.retraso_estimado_min)
+          });
+        });
+      });
+
+      const x = d3.scaleBand().domain(zonas)
+        .range([margen.left, ANCHO - margen.right]).padding(0.05);
+      const y = d3.scaleBand().domain(categorias)
+        .range([margen.top, margen.top + categorias.length * altoFila]).padding(0.05);
+
+      const rMax = Math.min(x.bandwidth(), y.bandwidth()) / 2 - 4;
+      const r = d3.scaleSqrt().domain([0, d3.max(celdas, c => c.n)]).range([6, rMax]);
+
+      const [pMin, pMax] = d3.extent(celdas, c => c.promedio);
+      const color = d3.scaleSequential(d3.interpolateYlOrRd).domain([pMin * 0.8, pMax]);
+
+      // Fondo de cada celda
+      svg.selectAll(".celda")
+        .data(d3.cross(zonas, categorias))
+        .join("rect")
+        .attr("x", ([z]) => x(z)).attr("y", ([, c]) => y(c))
+        .attr("width", x.bandwidth()).attr("height", y.bandwidth())
+        .attr("fill", "#f4f6f8").attr("rx", 4);
+
+      const g = svg.selectAll(".burbuja")
+        .data(celdas)
+        .join("g")
+        .attr("transform", c => `translate(${x(c.zona) + x.bandwidth() / 2}, ${y(c.cat) + y.bandwidth() / 2})`);
+
+      g.append("circle")
+        .attr("class", "punto")
+        .attr("r", c => r(c.n))
+        .attr("fill", c => color(c.promedio))
+        .append("title")
+        .text(c => `${c.cat} - ${c.zona}\n${c.n} incidente(s)\nRetraso promedio: ${c.promedio.toFixed(1)} min`);
+
+      g.append("text")
+        .attr("class", "etiqueta-valor")
+        .attr("text-anchor", "middle").attr("dy", "0.35em")
+        .attr("pointer-events", "none")
+        .attr("fill", c => c.promedio > (pMin + pMax) / 2 ? "white" : "#333")
+        .text(c => c.n);
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${margen.top + categorias.length * altoFila})`)
+        .call(d3.axisBottom(x).tickSize(0))
+        .call(g => g.select(".domain").remove());
+      svg.append("g")
+        .attr("transform", `translate(${margen.left}, 0)`)
+        .call(d3.axisLeft(y).tickSize(0))
+        .call(g => g.select(".domain").remove());
+
+      // Leyenda de color (degradado horizontal)
+      const defs = svg.append("defs");
+      const grad = defs.append("linearGradient").attr("id", "grad-retraso");
+      d3.range(0, 1.01, 0.1).forEach(t => {
+        grad.append("stop")
+          .attr("offset", `${t * 100}%`)
+          .attr("stop-color", color(pMin * 0.8 + t * (pMax - pMin * 0.8)));
+      });
+
+      const gx = margen.left, gy = alto - 45;
+      svg.append("rect")
+        .attr("x", gx).attr("y", gy).attr("width", 220).attr("height", 12)
+        .attr("fill", "url(#grad-retraso)");
+      svg.append("text").attr("class", "leyenda-texto")
+        .attr("x", gx).attr("y", gy + 28).text(`${(pMin * 0.8).toFixed(0)} min`);
+      svg.append("text").attr("class", "leyenda-texto")
+        .attr("x", gx + 220).attr("y", gy + 28).attr("text-anchor", "end").text(`${pMax.toFixed(0)} min`);
+      svg.append("text").attr("class", "leyenda-texto")
+        .attr("x", gx + 235).attr("y", gy + 10).text("Retraso promedio");
+    }
+
+    //  CARGA DE DATOS Y RENDERIZADO 
+    d3.json("datos.json").then(datos => {
+      dibujarDispersion("#g-dispersion", datos);
+      dibujarMapa("#g-mapa", datos);
+      dibujarAlcaldias("#g-alcaldia", datos);
+      dibujarTiempo("#g-tiempo", datos);
+      dibujarMatriz("#g-matriz", datos);
+    }).catch(error => {
+      console.error("Error al cargar el archivo datos.json:", error);
+      d3.selectAll(".contenedor-grafico")
+        .append("p")
+        .attr("class", "error-carga")
+        .text("No se pudo cargar datos.json. Abre la página con Live Server y verifica que el archivo esté en la misma carpeta.");
+    });
+  </script>
+
+</body>
+</html>
