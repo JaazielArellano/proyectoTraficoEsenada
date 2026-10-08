@@ -24,7 +24,7 @@
 - [Fondo](#fondo)
 - [Descripción general](#descripción-general)
 - [Diseño detallado](#diseño-detallado)
-  - [Solución 1: Módulo Extractor Desacoplado por Archivos JSON](#solución-1-módulo-extractor-desacoplado-por-archivos-json)
+  - [Solución 1: Ejecución mediante la función `ejecutar()` desde `main.py` y archivos JSON](#solución-1-ejecución-modular-mediante-la-función-ejecutar-desde-mainpy-y-archivos-json)
     - [Interfaz](#interfaz)
     - [Backend](#backend)
 - [Consideraciones](#consideraciones)
