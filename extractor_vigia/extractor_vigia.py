@@ -182,18 +182,50 @@ def crear_contrato(texto):
     }
 
 
-# Define la función para la ejecución modular del script como librería
-def ejecutar():
-    """Función principal expuesta como librería para ser llamada desde main.py."""
-    # Texto de prueba que simula una noticia
-    texto_noticia = """
-    El martes 15 de septiembre de 2026 se registró un accidente
-    sobre Avenida Reforma, en la calle Primera, colonia Centro.
+# Función que abre y lee el archivo donde están guardadas las noticias recibidas (simulación)
+def cargar_json(ruta_archivo="noticias_entrada.json"):
     """
-    # Procesa el texto de prueba con la función del contrato
-    resultado = crear_contrato(texto_noticia)
-    # Imprime el resultado transformado a JSON
-    print(json.dumps(resultado, ensure_ascii=False, indent=4))
+    Abre y lee la lista de noticias que nos pasaron.
+    """
+    # Abre el archivo de texto para leerlo
+    with open(ruta_archivo, "r", encoding="utf-8") as archivo:
+        # Convierte el archivo a un formato que Python entiende
+        return json.load(archivo)
+
+
+# Función que guarda los resultados procesados en un archivo JSON
+def guardar_json(datos, ruta_archivo="contrato_salida.json"):
+    """
+    Guarda la información extraída en un nuevo archivo.
+    """
+    # Crea o abre el archivo para escribir en él
+    with open(ruta_archivo, "w", encoding="utf-8") as archivo:
+        # Guarda los datos ordenados con espacios claros
+        json.dump(datos, archivo, ensure_ascii=False, indent=4)
+    print(f"\nSe guardó el archivo: {ruta_archivo}")
+
+
+# Función para la ejecución del script como librería
+def ejecutar():
+    """
+    Función que arranca todo el trabajo.
+    """
+    # 1. Trae las noticias guardadas en el archivo
+    noticias_entrada = cargar_json("noticias_entrada.json")
+    # Lista para juntar las respuestas de cada noticia
+    resultados = []
+    # 2. Revisa las noticias una por una
+    for noticia in noticias_entrada:
+        # Agarra solo el texto escrito de la noticia
+        texto_limpio = noticia["text"]
+        # Busca en el texto las fechas, días de la semana, calles, avenidas y colonias
+        contrato_salida = crear_contrato(texto_limpio)
+        # Guarda la información encontrada en la lista
+        resultados.append(contrato_salida)
+    # 3. Muestra los resultados
+    print(json.dumps(resultados, ensure_ascii=False, indent=4))
+    # 4. Crea el archivo JSON final con los datos encontrados
+    guardar_json(resultados, "contrato_salida.json")
 
 
 # Ejecutar cuando se llama directamente

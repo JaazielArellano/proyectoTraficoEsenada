@@ -1,3 +1,6 @@
+#MARTIN ROBERTO GONZALEZ ORTIZ
+#COMPORTAMIENTO DE DATOS
+
 import json
 import os
 import requests
