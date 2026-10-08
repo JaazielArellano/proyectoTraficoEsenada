@@ -21,22 +21,33 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
   - Calcular un nivel de confianza de la informacion encontrada.
 
 
-
 -[x] Python
--[x] Requests
--[x] BeautifulSoup
--[x] JSON
--[x] Expresiones regulares (`re`)
--[x] Git / GitHub
--[ ] HTML5
--[ ] CSS3
--[ ] JavaScript
--[ ] React
--[ ] Node.js
--[ ] MySQL
--[ ] MongoDB
--[ ] Otra
 
+-[x] Requests
+
+-[x] BeautifulSoup
+
+-[x] JSON
+
+-[x] Expresiones regulares (re)
+
+-[x] Git / GitHub
+
+-[ ] HTML5
+
+-[ ] CSS3
+
+-[ ] JavaScript
+
+-[ ] React
+
+-[ ] Node.js
+
+-[ ] MySQL
+
+-[ ] MongoDB
+
+-[ ] Otra
 
  Funciones Principales:
 1.Extraer noticias: Obtiene los enlaces de las noticias desde el RSS del Gobierno de Ensenada.
@@ -50,11 +61,16 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
  Estructura del Proyecto
 
+
 proyecto/
-│
+
 ├── main.py
+
 ├── enviar_links.py
+
 ├── procesador_texto.py
-│
+
+
 ├── noticias_historial_ensenada.json
+
 └── noticias_nuevas_ensenada.json
