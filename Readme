@@ -1,0 +1,76 @@
+# Módulo de Gráficas
+
+Gráficas interactivas en el navegador con [D3.js](https://d3js.org/), a partir de datos en formato JSON (noticias por categoría, estado e impacto vial).
+
+> D3.js es una biblioteca de JavaScript para visualizar datos en gráficas interactivas.
+
+## Necesitas
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- La extensión **Live Server** de VS Code
+- Un navegador web (Chrome, Edge, Firefox)
+- Conexión a internet (D3.js se carga desde un CDN)
+
+## Instalar
+
+1. Descarga o clona este proyecto y ábrelo en VS Code.
+2. Abre la pestaña de Extensiones (`Ctrl+Shift+X`), busca **Live Server** e instálala.
+3. Verifica que tu archivo HTML cargue D3 con esta línea:
+
+```html
+<script src="https://d3js.org/d3.v7.min.js"></script>
+```
+
+## Usar
+
+1. Abre el archivo `index.html` en VS Code.
+2. Clic derecho y elige **Open with Live Server**.
+3. Se abre el navegador con las gráficas.
+
+> VS Code solo corre D3.js dentro de archivos **HTML**, no en archivos `.js` sueltos.
+
+## Cómo está armado
+
+Cada gráfica necesita su propio contenedor `<div>` con un `id` distinto. D3 lo encuentra con `d3.select("#id")`:
+
+```html
+<h2>Noticias por categoría</h2>
+<div id="grafico-categoria"></div>
+
+<h2>Noticias por estado</h2>
+<div id="grafico-estado"></div>
+
+<h2>Noticias por impacto vial</h2>
+<div id="grafico-impacto"></div>
+```
+
+La función `dibujarGrafica(selector, datos)` se reutiliza para dibujar cada gráfica. Los datos entran como una variable JSON (D3 soporta JSON y diccionarios).
+
+Para cambiar el tamaño de la gráfica, edita los márgenes:
+
+```js
+const ancho = 1024;
+const alto = 800;
+```
+
+## Gráficas que se pueden usar según los datos
+
+| Gráfica | Sirve para | Nota |
+| Mapa de calor (heatmap) alcaldía × categoría | Ver cuántas noticias hay en cada cruce, con color | Funciona bien con muchas categorías |
+| Dona o pastel | Proporciones simples (% por alcaldía o estado) | Con más de 6 o 7 categorías es difícil de leer |
+| Barras apiladas (alcaldía × categoría o impacto vial) | Responder "¿dónde hay más problemas viales altos?" | Se hace con `d3.stack()` |
+
+## Errores comunes
+
+- Falta cerrar una llave `}`.
+- Las barras se seleccionan con punto: `.bar`, no `bar`.
+- Si agregas muchas variables al JSON y aparece un error, revisa llaves, comas y comillas del JSON.
+
+## Pendientes
+
+- [ ] Definir el formato (contrato) de datos que usará el equipo.
+
+## Notas de aprendizaje
+
+- Los videos de D3.js que encontré tenían más de 10 años, así que usé Claude Code para aprender.
+- Estoy repasando HTML mientras avanzo.
