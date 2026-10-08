@@ -1,5 +1,5 @@
 """
-ejemplo_dashboard_emilio_edgar.py
+Avance_conjunto.py
 
 Prototipo del componente "Mapa interactivo" del módulo Dashboard.
 
@@ -8,7 +8,7 @@ Proyecto: Proyecto Integrador de Extracción de Datos Geográficos (Ensenada)
 
 Cómo correrlo:
     pip install streamlit pandas folium streamlit-folium
-    streamlit run ejemplo_dashboard_v3.py
+    streamlit run Avance_conjunto.py
 """
 
 import pandas as pd
