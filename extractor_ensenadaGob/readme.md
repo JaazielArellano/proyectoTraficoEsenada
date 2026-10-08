@@ -54,11 +54,17 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 
  Funciones Principales:
 1.Extraer noticias: Obtiene los enlaces de las noticias desde el RSS del Gobierno de Ensenada.
+
 2.Detectar noticias nuevas: Compara los enlaces obtenidos con un historial para identificar cuales son nuevos.
+
 3.Guardar noticias: Guarda el historial y las noticias nuevas en archivos JSON.
+
 4.Enviar enlaces: Envia los enlaces nuevos a una API mediante una peticion POST.
+
 5.Procesar texto:Analiza el texto de una noticia una vez que es recibido.
+
 6.Detectar información: Busca la fecha, día, calle y colonia dentro del texto.
+
 7.Calcular confianza:Calcula un nivel de confianza dependiendo de los datos encontrados.
 
 
