@@ -1,11 +1,16 @@
 import requests
 import json
+import os
 
 API_URL = "https://relax-albatross-pessimism.ngrok-free.dev/urls"
 
 def enviar_a_api():
-    # Cargar todos los enlaces guardados en un solo JSON
-    with open("cespe_links.json", "r", encoding="utf-8") as f:
+    #Obtener la ruta de la carpeta donde se encuentra este archivo
+    directorio_actual = os.path.dirname(__file__)
+    ruta_json = os.path.join(directorio_actual, "cespe_links.json")
+
+    # Cargar todos los enlaces guardados en un solo JSON 
+    with open(ruta_json, "r", encoding="utf-8") as f:
         enlaces = json.load(f)
 
     if not enlaces:
@@ -22,4 +27,5 @@ def enviar_a_api():
         print(f"❌ Error al enviar -> Código {respuesta.status_code}")
 
 # Ejecutar la verificación
-enviar_a_api()
+if __name__ == "__main__":
+    enviar_a_api()

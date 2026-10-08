@@ -71,8 +71,6 @@ def ciclo_scraper():
 
     enviar_a_api(nuevos)
 
-#  Ejecutar cada 10 minutos
-while True:
+if __name__ == "__main__":
     ciclo_scraper()
-    print("⏳ Esperando 10 minutos antes del próximo ciclo...\n")
-    time.sleep(600)
+    
