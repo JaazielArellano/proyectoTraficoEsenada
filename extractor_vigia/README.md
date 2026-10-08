@@ -1,6 +1,6 @@
 # Módulo Extractor – El Vigía
 
-**Enlace:** [Repositorio del Proyecto](https://github.com/JaazielArellano/proyectoTraficoEsenada.git)  
+**Enlace:** [Repositorio del proyecto](https://github.com/JaazielArellano/proyectoTraficoEsenada.git)  
 **Autor(es):** Angela Guadalupe Martínez Rivera  
 **Estado:** Listo para revisión 
 **Última actualización:** 2026-10-07  
