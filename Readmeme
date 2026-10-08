@@ -1,0 +1,29 @@
+Comenzamos configurando el entorno de trabajo desde cero en la terminal del servidor 
+Linux. Para mantener todo en orden y sin interferir con el sistema, creamos un entorno
+virtual (`.venv`) e instalamos las librerías principales de nuestro stack: FastAPI para
+construir la API, Uvicorn para ejecutar el servidor web, `psycopg2` para conectarnos a la
+base de datos PostgreSQL y `python-dotenv` para administrar nuestras variables de entorno.
+
+El siguiente paso fue la configuración del acceso a la base de datos. 
+Enfrentamos un primer obstáculo porque el archivo `.env` estaba ubicado en una 
+carpeta equivocada (`~/Casino/`), por lo que FastAPI no podía leerlo. Tras mover 
+el `.env` a la raíz de nuestro proyecto (`~/Casino/fastapi-postgresql-api/`), 
+logramos cargar correctamente el usuario `efren`, la contraseña `casino`, la base de 
+datos `postgres` y el host local `127.0.0.1`.
+
+Una vez corregido el entorno, encendimos el servidor ejecutando Uvicorn en el puerto 
+`8000` y configurado con la IP `0.0.0.0`. Esto nos permitió abrir la interfaz 
+interactiva de Swagger UI directamente en nuestro navegador usando la dirección 
+IP pública del servidor (`[http://148.231.239.96:8000/docs](http://148.231.239.96:8000/docs)`).
+
+Al realizar las primeras peticiones a la API recibimos un error `500 Internal 
+Server Error`. Para descubrir el origen exacto del fallo, corrimos un pequeño 
+script de Python que consultó la tabla del sistema `information_schema` en PostgreSQL.
+Gracias a esto, nos dimos cuenta de que en `main.py` había un pequeño error tipográfico
+en el nombre de la tabla (`pruebaj` en vez de `prueba`) y que la tabla real solo tenía
+una columna de tipo entero llamada `id`.
+
+Finalmente, adaptamos las consultas SQL y el modelo de datos de Pydantic dentro de
+`main.py` para que apuntaran a la tabla `prueba` con su campo `id`. Con estos cambios
+sincronizados, la ruta `/api/datos` devolvió un **`200 OK`**, confirmando que el 
+servidor, la API y la base de datos quedaron totalmente integrados y funcionales.
