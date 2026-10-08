@@ -57,7 +57,6 @@ MOCK_DATA = pd.DataFrame(
      if r.get("lat") is not None and r.get("lon") is not None],
     columns=COLUMNAS_MAPA,
 )
-# ---------------------------------------------------------------------------
 
 df = pd.DataFrame(MOCK_DATA)
 
