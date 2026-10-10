@@ -76,3 +76,46 @@ El script `scraper_ensenada.py` funciona como un servicio automatizado programad
 ## Métricas
 *   **Calidad de Código:** Evaluación de estándares de código mediante Pylint (Calificación 10/10).
 *   **Rendimiento:** Validación de respuestas exitosas (Código HTTP 200/201) al interactuar con el endpoint de destino mediante `requests`.
+
+##  Estructura de Archivos
+
+```
+extractor_ensenadanet/
+│
+├── scraper_ensenada.py      # Motor de scraping. Navega el portal, extrae la información, filtra duplicados y genera los archivos JSON.
+├── linkapi.py               # Adaptador API. Lee los JSON locales, recorta las URLs y hace el POST al servidor del equipo.
+├── main.py                  # Importa los módulos anteriores como librerías y los ejecuta en el orden correcto.
+├── requirements.txt         # Lista de dependencias (requests, beautifulsoup4) necesarias para el entorno virtual.
+├── .gitignore               # Reglas para evitar subir la caché (__pycache__) y los archivos de base de datos JSON locales.
+└── noticias_nuevas.json     # Almacena de forma temporal los datos extraídos en el último ciclo.
+```
+
+# Guia de Instalación y Ejecución
+
+Sigue estos pasos para clonar, configurar y ejecutar el módulo localmente:
+
+1. Clonar el repositorio
+
+git clone https://github.com/JaazielArellano/proyectoTraficoEsenada.git
+
+
+2. Crear y activar el entorno virtual (venv)
+
+Para usaurios de Mac / Linux
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+Para usuarios de Windows
+
+python -m venv .venv
+.venv\Scripts\activate
+
+3. Instalar dependencias
+
+pip install -r requirements.txt
+
+4. Ejecución del proyecto
+(Nota: solo se ejecuta main y no otro archivo .py)
+
+python main.py
