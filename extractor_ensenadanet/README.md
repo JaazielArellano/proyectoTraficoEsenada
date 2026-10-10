@@ -101,7 +101,7 @@ git clone https://github.com/JaazielArellano/proyectoTraficoEsenada.git
 
 2. Crear y activar el entorno virtual (venv)
 
-Para usaurios de Mac / Linux
+Para usuarios de Mac / Linux
 
 python3 -m venv .venv
 source .venv/bin/activate
