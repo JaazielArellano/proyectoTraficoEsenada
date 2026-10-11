@@ -1,4 +1,4 @@
-﻿# 🗺️ Dashboard: Mapa Interactivo
+﻿# Dashboard: Mapa Interactivo
  
 Proyecto Integrador de Extracción de Datos Geográficos (Ensenada) · Módulo Dashboard
 Materia: Patrones De Comportamiento De Datos · Grupo 371
@@ -15,13 +15,13 @@ Materia: Patrones De Comportamiento De Datos · Grupo 371
 8. [Documentación del proyecto](#-documentación-del-proyecto)
 9. [Equipo](#-equipo)
 10. [Estado y pendientes](#-estado-y-pendientes)
-## 📝 Descripción
+## Descripción
  
 Componente de **mapa interactivo** del módulo Dashboard. Muestra los registros geográficos del sistema (calle, colonia, nivel de confianza y fuente del dato) sobre un mapa.
  
 Permite filtrar por colonia, alternar entre cartografía y satélite, y agregar notas con un clic. Por ahora trabaja con datos simulados.
  
-## 🎯 Objetivos
+## Objetivos
  
 **General:** construir el mapa interactivo del Dashboard, que muestre los datos geográficos del sistema de forma clara y navegable.
  
@@ -32,7 +32,7 @@ Permite filtrar por colonia, alternar entre cartografía y satélite, y agregar 
 - Alternar entre vista de cartografía y vista satelital.
 - Agregar notas sobre un punto del mapa con un clic.
 - Dejar el componente listo para conectarse a datos reales.
-## 🛠 Tecnologías
+## Tecnologías
  
 - [ ] HTML5
 - [ ] CSS3
@@ -54,7 +54,7 @@ Permite filtrar por colonia, alternar entre cartografía y satélite, y agregar 
 `openpyxl`Lectura de archivos `.xlsx` (versión conjunta con la carga de Excel) 
 `requests`Consumo de una API real (solo si se desactiva la API simulada) 
  
-## ⚙️ Funcionalidades
+## Funcionalidades
  
 1. **Marcadores por registro:** color rojo si la confianza es menor a 0.7, verde si es mayor o igual.
 2. **Popup informativo:** al hacer clic en un marcador se ven calle, colonia, confianza y fuente.
@@ -62,7 +62,7 @@ Permite filtrar por colonia, alternar entre cartografía y satélite, y agregar 
 4. **Cartografía y satélite:** control en el mapa para cambiar de fondo (OpenStreetMap o Esri).
 5. **Notas con un clic:** se escribe una calle y una nota sobre el punto elegido. Por ahora solo se guardan en memoria.
 6. **Centrado automático:** el mapa se centra según los registros que se estén mostrando.
-## 💻 Instalación y ejecución
+## Instalación y ejecución
  
 Se usa un **entorno virtual (venv)** para que las librerías del proyecto no se mezclen con las de otros proyectos.
  
