@@ -1,0 +1,13 @@
+# Entorno virtual (no se sube a GitHub)
+.venv*/
+venv/
+
+# Variables de entorno con datos privados
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store
