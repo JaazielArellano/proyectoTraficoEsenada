@@ -1,7 +1,24 @@
 """Módulo para extraer datos de la página de El Vigía."""
 
 # Importa el módulo json
+import os
 import json
+from dotenv import load_dotenv
+
+
+# Carga las variables de entorno desde el archivo .env
+load_dotenv()
+
+# Obtiene la ruta absoluta del directorio donde se encuentra este script
+DIRECTORIO_ACTUAL = os.path.dirname(os.path.abspath(__file__))
+
+# Configuración de rutas y variables leyendo desde el .env con fallback seguro
+RUTA_ENTRADA_DEFECTO = os.path.join(DIRECTORIO_ACTUAL, "noticias_entrada.json")
+RUTA_SALIDA_DEFECTO = os.path.join(DIRECTORIO_ACTUAL, "contrato_salida.json")
+
+NOTICIAS_ENTRADA_FILE = os.getenv("NOTICIAS_ENTRADA_FILE", RUTA_ENTRADA_DEFECTO)
+CONTRATO_SALIDA_FILE = os.getenv("CONTRATO_SALIDA_FILE", RUTA_SALIDA_DEFECTO)
+#API_CATASTRO_URL = os.getenv("API_CATASTRO_URL", "https://api.catastro.ensenada.gob.mx/v1/predios")
 
 
 # Define la función que identifica los días de la semana y sus números
@@ -142,7 +159,7 @@ def extraer_vias_publicas(texto):
 
 
 # Función que une la extracción y calcula la confianza
-def crear_contrato(texto):
+def crear_contrato(texto, as_json=False):
     """Crear el contrato de salida del Extractor."""
     # Ejecuta la extracción de días
     dias = procesar_y_evaluar_dias(texto)
@@ -171,8 +188,8 @@ def crear_contrato(texto):
     if colonia:
         confidence += 0.10
 
-    # Retorna el diccionario final estructurado como contrato JSON
-    return {
+    # Estructura de datos (diccionario)
+    contrato_dict = {
         "date": fecha,
         "day": dia,
         "street": calle,
@@ -181,26 +198,37 @@ def crear_contrato(texto):
         "confidence": round(confidence, 2)
     }
 
+    # Convierte los datos a un texto en formato JSON fácil de compartir
+    if as_json:
+        return json.dumps(contrato_dict, ensure_ascii=False, indent=4)
+
+    # Retorna el diccionario
+    return contrato_dict
+
 
 # Función que abre y lee el archivo donde están guardadas las noticias recibidas (simulación)
-def cargar_json(ruta_archivo="noticias_entrada.json"):
-    """
-    Abre y lee la lista de noticias que nos pasaron.
-    """
-    # Abre el archivo de texto para leerlo
+def cargar_json(ruta_archivo=None):
+    """Abre y lee la lista de noticias cargando la ruta desde el archivo .env."""
+    # Si no se especifica una ruta, toma por defecto la variable configurada en el .env
+    if ruta_archivo is None:
+        ruta_archivo = NOTICIAS_ENTRADA_FILE
+
+    # Abre y lee el archivo JSON
     with open(ruta_archivo, "r", encoding="utf-8") as archivo:
-        # Convierte el archivo a un formato que Python entiende
         return json.load(archivo)
 
 
 # Función que guarda los resultados procesados en un archivo JSON
-def guardar_json(datos, ruta_archivo="contrato_salida.json"):
+def guardar_json(datos, ruta_archivo=None):
     """
     Guarda la información extraída en un nuevo archivo.
     """
-    # Crea o abre el archivo para escribir en él
+    # Si no se especifica una ruta, toma por defecto la variable configurada en el .env
+    if ruta_archivo is None:
+        ruta_archivo = CONTRATO_SALIDA_FILE
+
+    # Guarda la información en el archivo JSON
     with open(ruta_archivo, "w", encoding="utf-8") as archivo:
-        # Guarda los datos ordenados con espacios claros
         json.dump(datos, archivo, ensure_ascii=False, indent=4)
     print(f"\nSe guardó el archivo: {ruta_archivo}")
 
@@ -208,24 +236,29 @@ def guardar_json(datos, ruta_archivo="contrato_salida.json"):
 # Función para la ejecución del script como librería
 def ejecutar():
     """
-    Función que arranca todo el trabajo.
+    Función que ejecuta todo el trabajo.
     """
-    # 1. Trae las noticias guardadas en el archivo
-    noticias_entrada = cargar_json("noticias_entrada.json")
-    # Lista para juntar las respuestas de cada noticia
+    # Carga las noticias de entrada desde la ruta especificada en .env
+    noticias_entrada = cargar_json()
+    # Lista donde se acumularán los contratos de salida generados
     resultados = []
-    # 2. Revisa las noticias una por una
+
+    # Procesa cada noticia recibida
     for noticia in noticias_entrada:
-        # Agarra solo el texto escrito de la noticia
+        # Extrae 'text' de la noticia
         texto_limpio = noticia["text"]
-        # Busca en el texto las fechas, días de la semana, calles, avenidas y colonias
+        # Construye el contrato para la noticia actual
         contrato_salida = crear_contrato(texto_limpio)
-        # Guarda la información encontrada en la lista
+        # Agrega el contrato a la lista de resultados
         resultados.append(contrato_salida)
-    # 3. Muestra los resultados
-    print(json.dumps(resultados, ensure_ascii=False, indent=4))
-    # 4. Crea el archivo JSON final con los datos encontrados
-    guardar_json(resultados, "contrato_salida.json")
+
+    # Convertimos la lista de resultados a una Cadena/Objeto JSON
+    json_salida = json.dumps(resultados, ensure_ascii=False, indent=4)
+    # Muestra el resultado en la consola
+    print(json_salida)
+
+    # Guarda los contratos procesados en el archivo final de salida
+    guardar_json(resultados)
 
 
 # Ejecutar cuando se llama directamente
