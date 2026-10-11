@@ -45,7 +45,7 @@ Permite filtrar por colonia, alternar entre cartografía y satélite, y agregar 
 - [ ] MongoDB
 - [x] Git / GitHub
 - [x] Otra: Streamlit, Folium, streamlit-folium, pandas
-| Librería | Uso en este componente |
+Librería,Uso en este componen
 
 `streamlit` Estructura y páginas de la aplicación web 
 `folium`  Construcción del mapa interactivo (marcadores y capas) sobre OpenStreetMap 
