@@ -17,6 +17,7 @@
 ## Contenido
 
 - [Archivos principales del proyecto](#archivos-principales-del-proyecto)
+- [Instrucciones de instalación y ejecución](#instrucciones-de-instalación-y-ejecución)
 - [Objetivo](#objetivo)
 - [Objetivos y No-goles](#objetivos-y-no-goles)
   - [Objetivos](#objetivos)
@@ -27,8 +28,54 @@
   - [Solución 1: Ejecución mediante la función `ejecutar()` desde `main.py` y archivos JSON](#solución-1-ejecución-modular-mediante-la-función-ejecutar-desde-mainpy-y-archivos-json)
     - [Interfaz](#interfaz)
     - [Backend](#backend)
+- [Pruebas con FakeData](#pruebas-con-fakedata)
 - [Consideraciones](#consideraciones)
 - [Métricas](#métricas)
+
+---
+
+## Instrucciones de instalación y ejecución
+
+Sigue estos pasos para clonar, configurar y ejecutar el proyecto localmente:
+
+### 1. Clonación del repositorio
+
+Para clonar el repositorio del proyecto se utilizó el siguiente comando:
+
+```bash
+git clone https://github.com/JaazielArellano/proyectoTraficoEsenada.git
+```
+
+---
+### 2. Creación y activación del entorno virtual (venv)
+
+Se creó un entorno virtual mediante el siguiente comando:
+
+```bash
+python -m venv venv
+```
+
+Después de crear el entorno virtual, se procedió a activarlo utilizando el siguiente comando:
+
+```bash
+venv\Scripts\activate
+```
+
+Una vez activado el entorno virtual, instalé las librerías necesarias para el trabajo, usando el siguiente comando:
+
+```bash
+pip install requests beautifulsoup4 urllib3 dotenv
+```
+
+---
+
+### 3. Ejecución del módulo
+
+Para ejecutir el flujo completo se utilizó el siguiente comando:
+
+```bash
+python main.py
+```
 
 ---
 
@@ -115,6 +162,20 @@ Los scripts tienen una función principal `ejecutar()` para ser importada desde 
 * **Reutilización y componentes:**
   * `main.py`: Script principal que llama como librerías los scripts principales: `url.py()`, `enviar_post.py()` y `extractor_vigia.py` usando la función `ejecutar()`.
   * `url.py` / `enviar_post.py`: Scripts complementarios para la recolección y comunicación de enlaces a la API.
+
+---
+
+## Pruebas con FakeData
+
+Para garantizar la estabilidad del módulo antes de consumir las APIs, se implementaron pruebas con datos simulados (**FakeData**).
+
+### Pruebas realizadas:
+1. **Extracción de fechas e información:**
+   - Pruebas con textos de noticias simuladas que contienen fechas válidas (*martes 15 de septiembre de 2026*) y nombres de vialidades de Ensenada (*Reforma*, *Delante*, *Centro*).
+3. **Manejo de errores:**
+   - Verificación del comportamiento del código ante textos sin direcciones y datos faltantes.
+4. **Validación de formato JSON:**
+   - Confirmación de que las salidas cumplen con la estructura del contrato especificado.
 
 ---
 
