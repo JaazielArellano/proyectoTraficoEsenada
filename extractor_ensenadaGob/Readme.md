@@ -67,7 +67,6 @@ proyecto/
 
 ├── procesador_texto.py
 
-│
 ├── noticias_historial_ensenada.json
 
 └── noticias_nuevas_ensenada.json
