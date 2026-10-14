@@ -123,32 +123,22 @@ def procesador_noticias(texto):                                     # Funcion qu
 
     return resultado                                                # Devuelve todos los resultados que encontro la funcion
 
-##############
-#    EJEMPLO
-##############
-"""
-texto = Ensenada, B.C.- Lunes 5 de octubre de 2026.- Con atención con perspectiva
-de género y acciones basadas en la empatía, la cercanía y la inclusión,
-la alcaldesa Claudia Agatón Muñiz destacó la atención y el empoderamiento
-de cerca de 11 mil mujeres ensenadenses.
+############################
+# LEER NOTICIAS DEL JSON
+############################
 
-Ante más de 3 mil personas, entre autoridades de los tres órdenes de gobierno,
-integrantes de las Fuerzas Armadas y ciudadanía, que asistieron a la presentación
-de su Segundo Informe de Gobierno, resaltó que el bienestar y desarrollo de las
-mujeres es uno de sus principales compromisos.
+with open("noticias_pruebas.json", "r", encoding="utf-8") as archivo:               # Abre el archivo JSON para leerlo y lo llama archivo
+    noticias = json.load(archivo)                                                   # Lee el JSON y guarda las noticias en noticias
 
-Señaló que, en atención a la política de bienestar y equidad de género impulsada
-por la presidenta de México, Claudia Sheinbaum Pardo, se puso en marcha en
-Ensenada el primer Centro Libre, enfocado principalmente en la atención y
-protección de mujeres de sectores precarizados.
-"""
-texto="""Ensenada B.C.- Martes 17 de junio de 2025.- Vialidades de terracería de cuatro delegaciones y  7 colonias de la zona urbana y conurbada han sido rehabilitadas en la última semana por el Gobierno de Ensenada.
-La alcaldesa Claudia Agatón Muñiz informó que estas acciones forman parte del programa ordinario de trabajo y de la atención a reportes de la ciudadanía, por parte de la Dirección de Servicios Públicos.
-Detalló que, entre las vialidades atendidas con maquinaria pesada, destacan: las privadas De la luna y Estrella, en el fraccionamiento Toscana, en la zona de El Salitral; calle Caracol, en la colonia Villas del Mar; José María Morelos y Pavón, en la Delegación Maneadero.
-Además, de raspado en el acceso al plantel del Cecyte en San Antonio de las Minas; en diversos caminos y accesos en San Vicente; avenida Calafia, en la colonia Rosas Magallón; y, motoconformado con revestimiento con granito en la calle Cerezos en Lomas de Valle Verde.
-Claudia Agatón reiteró el llamado a quienes residen en zonas con calles con terracería, a solicitar este servicio en la línea de WhatsApp 646 288 17 73, en donde vía mensaje de texto se atienden y canalizan las peticiones de la ciudadanía, para su atención en el menor tiempo posible."""
+############################
+# PROCESAR NOTICIAS
+############################
 
-resultado = procesador_noticias(texto)                                   # Llama a la funcion procesador_noticias y le pasa el texto de la noticia                      
+for noticia in noticias:                                                            # Recorre una por una todas las noticias
+    texto = noticia["texto"]                                                        # Obtiene el texto de la noticia
+    resultado = procesador_noticias(texto)                                          # Envia el texto a la funcion para extraer la informacion 
+    print("URL:", noticia["url"])                                                   # Muestra la URL de la noticia
 
-for clave, valor in resultado.items():                                   # Recorre uno por uno los datos que estan dentro de resultado resultado.items() obtiene cada pareja
-    print(clave + ":", valor)                                            # clave representa el nombre del dato y valor representa la informacion  encontrada
+    for clave, valor in resultado.items():                                          # Recorre los datos encontrados y separa su nombre (clave) y contenido (valor)
+        print(clave + ":", valor)                                                   # Muestra cada dato
+    print("-----------------------------")
