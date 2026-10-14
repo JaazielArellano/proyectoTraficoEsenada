@@ -61,6 +61,7 @@ Cada uno cumple una funcion en especifico dentro del proceso de extraccion, envi
 
 proyecto/
 │
+
 ├── main.py
 
 ├── enviar_links.py
