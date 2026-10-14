@@ -1,43 +1,81 @@
 #MARTIN ROBERTO GONZALEZ ORTIZ
 #COMPORTAMIENTO DE DATOS
-
 import json
 import os
+import re
+from datetime import datetime
 import requests
 
 # --- CONFIGURACIÓN ---
-ARCHIVO_CACHE = "noticias_facebook.json"
-URL_API_NGROK = "https://relax-albatross-pessimism.ngrok-free.dev/urls"
-# IMPORTANTE: Cambia esta API key, la que tenías ya quedó expuesta
-MI_APIFY_TOKEN = "apify_api_Cm5bfgiXp5vR7iB2bE5H3hTCVrwhyG2POehT"
+ARCHIVO_CACHE = "noticias_facebook_ json."
+MI_APIFY_TOKEN = "apify_api_Vj7kz88fHNwWSNunVBjoZBTzD46RJZ0G7q0h"
+
+# Días de la semana en español
+DIAS_SEMANA = {
+    0: "Lunes", 1: "Martes", 2: "Miércoles", 3: "Jueves",
+    4: "Viernes", 5: "Sábado", 6: "Domingo"
+}
 
 
 def cargar_cache(nombre_archivo):
-    """Carga los enlaces guardados previamente si el archivo existe."""
+    """Carga los registros previamente guardados."""
     if os.path.exists(nombre_archivo):
         try:
             with open(nombre_archivo, "r", encoding="utf-8") as f:
                 datos = json.load(f)
-                return set(datos.get("links", []))
+                return datos.get("registros", [])
         except (json.JSONDecodeError, IOError):
-            print("No se pudo leer el cache existente. Se iniciará un cache nuevo.")
-            return set()
-    return set()
+            print("No se pudo leer el cache existente. Se iniciará uno nuevo.")
+            return []
+    return []
 
 
-def guardar_cache(nombre_archivo, set_links):
-    """Guarda la lista acumulada de enlaces únicos en el archivo JSON."""
-    lista_ordenada = list(set_links)
+def guardar_cache(nombre_archivo, registros):
+    """Guarda la lista acumulada de noticias procesadas."""
     datos_json = {
-        "total": len(lista_ordenada),
+        "total": len(registros),
         "fuente": "Facebook - Gobierno de Ensenada",
-        "links": lista_ordenada,
+        "registros": registros,
     }
     with open(nombre_archivo, "w", encoding="utf-8") as f:
         json.dump(datos_json, f, ensure_ascii=False, indent=4)
 
 
+def extraer_ubicacion_del_texto(texto):
+    """
+    Analiza el texto de la publicación para identificar calle y colonia.
+    """
+    if not texto:
+        return "No detectado", "No detectado", "bajo"
+
+    calle = "No detectado"
+    colonia = "No detectado"
+    confianza = "bajo"
+
+    # Patrones comunes para detectar calles
+    patron_calle = r"(?:calle|av\.|avenida|blvd\.|bulevar|calzada)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|col\.|colonia|entre|\.|$))"
+    # Patrones comunes para detectar colonias/barrios
+    patron_colonia = r"(?:col\.|colonia|fracc\.|fraccionamiento|ejido|barrio)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|entre|\.|$))"
+
+    match_calle = re.search(patron_calle, texto, re.IGNORECASE)
+    match_colonia = re.search(patron_colonia, texto, re.IGNORECASE)
+
+    if match_calle:
+        calle = match_calle.group(1).strip()
+    if match_colonia:
+        colonia = match_colonia.group(1).strip()
+
+    # Determinar nivel de confianza
+    if match_calle and match_colonia:
+        confianza = "alto"
+    elif match_calle or match_colonia:
+        confianza = "medio"
+
+    return calle, colonia, confianza
+
+
 def extractor_facebook_apify(token_apify, limite=20):
+    """Extrae las publicaciones de Apify y las convierte al diccionario en español."""
     endpoint = f"https://api.apify.com/v2/acts/apify~facebook-posts-scraper/run-sync-get-dataset-items?token={token_apify}"
     payload = {
         "startUrls": [{"url": "https://www.facebook.com/GobiernoDeEnsenada"}],
@@ -45,78 +83,84 @@ def extractor_facebook_apify(token_apify, limite=20):
     }
 
     print("1. Enviando petición a Apify (extrayendo publicaciones)...")
-    respuesta = requests.post(endpoint, json=payload, timeout=60)
+    try:
+        respuesta = requests.post(endpoint, json=payload, timeout=60)
+    except requests.RequestException as error:
+        print(f"Error de conexión con Apify: {error}")
+        return []
 
     if respuesta.status_code in [200, 201]:
         items = respuesta.json()
-        nuevos_links = []
+        resultados = []
 
         for item in items:
-            url = (
-                item.get("url") or item.get("postUrl") or item.get("canonicalUrl")
-            )
-            if url:
-                url_limpia = url.split("?")[0].split("&")[0]
-                nuevos_links.append(url_limpia)
+            # 1. Obtener URL única
+            url = item.get("url") or item.get("postUrl") or item.get("canonicalUrl") or ""
+            url_limpia = url.split("?")[0].split("&")[0] if url else ""
 
-        return nuevos_links
+            # 2. Formatear Fecha y Día
+            raw_time = item.get("time") or item.get("timestamp")
+            if raw_time:
+                try:
+                    dt = datetime.fromisoformat(str(raw_time).replace("Z", "+00:00"))
+                    fecha_str = dt.strftime("%Y-%m-%d")
+                    dia_str = DIAS_SEMANA.get(dt.weekday(), "")
+                except ValueError:
+                    fecha_str = datetime.now().strftime("%Y-%m-%d")
+                    dia_str = DIAS_SEMANA.get(datetime.now().weekday(), "")
+            else:
+                fecha_str = datetime.now().strftime("%Y-%m-%d")
+                dia_str = DIAS_SEMANA.get(datetime.now().weekday(), "")
+
+            # 3. Extraer Calle, Colonia y Confianza del texto del post
+            texto_post = item.get("text") or item.get("caption") or ""
+            calle, colonia, confianza = extraer_ubicacion_del_texto(texto_post)
+
+            # Estructura en Español
+            resultado = {
+                "url": url_limpia,
+                "fecha": fecha_str,
+                "dia": dia_str,
+                "calle": calle,
+                "colonia": colonia,
+                "confianza": confianza,
+            }
+
+            resultados.append(resultado)
+
+        return resultados
     else:
         print(f"Error Apify {respuesta.status_code}: {respuesta.text}")
         return []
 
 
-def enviar_a_ngrok(payload_datos):
-    """Envía la payload con URLs a tu API ngrok."""
-    headers = {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "69420",
-    }
-    print("3. Enviando nuevos enlaces a la API en ngrok...")
-    try:
-        respuesta = requests.post(
-            URL_API_NGROK, json=payload_datos, headers=headers, timeout=10
-        )
-        print(f"   Estado HTTP: {respuesta.status_code}")
-        print(f"   Respuesta Servidor: {respuesta.text}")
-    except requests.RequestException as error:
-        print(f"   Error al conectar con la API ngrok: {error}")
-
-
 # --- EJECUCIÓN PRINCIPAL ---
 if __name__ == "__main__":
-    # 1. Cargar cache
-    cache_links = cargar_cache(ARCHIVO_CACHE)
-    print(f"Enlaces en cache previo: {len(cache_links)}")
+    # 1. Cargar caché previo
+    cache_registros = cargar_cache(ARCHIVO_CACHE)
+    urls_existentes = {item["url"] for item in cache_registros if "url" in item}
+    print(f"Registros previos en caché: {len(cache_registros)}")
 
-    # 2. Extraer de Apify
-    links_obtenidos = extractor_facebook_apify(MI_APIFY_TOKEN, limite=20)
+    # 2. Extraer publicaciones de Apify
+    noticias_obtenidas = extractor_facebook_apify(MI_APIFY_TOKEN, limite=20)
 
-    # 3. Filtrar solo los enlaces realmente NUEVOS
-    links_nuevos = [
-        link for link in links_obtenidos if link not in cache_links
-    ]
+    if noticias_obtenidas:
+        # 3. Filtrar registros no guardados previamente
+        nuevos_registros = [
+            item for item in noticias_obtenidas if item["url"] and item["url"] not in urls_existentes
+        ]
 
-    if links_obtenidos:
-        # Actualizar el archivo de caché histórico
-        cache_links.update(links_obtenidos)
-        guardar_cache(ARCHIVO_CACHE, cache_links)
+        if nuevos_registros:
+            cache_registros.extend(nuevos_registros)
+            guardar_cache(ARCHIVO_CACHE, cache_registros)
 
-        print(f"\n¡Extracción exitosa!")
-        print(f"- Nuevos enlaces encontrados hoy: {len(links_nuevos)}")
-        print(
-            f"- Total acumulado en '{ARCHIVO_CACHE}': {len(cache_links)}\n"
-        )
+            print(f"\n¡Extracción exitosa!")
+            print(f"- Nuevos registros agregados hoy: {len(nuevos_registros)}")
+            print(f"- Total acumulado en '{ARCHIVO_CACHE}': {len(cache_registros)}\n")
 
-        # 4. Enviar a ngrok SOLO si hay URLs nuevas
-        if links_nuevos:
-            payload_para_api = {
-                "fuente": "Facebook - Gobierno de Ensenada",
-                "total_nuevos": len(links_nuevos),
-                "urls": links_nuevos,
-            }
-
-            enviar_a_ngrok(payload_para_api)
+            print("Ejemplo de registro guardado:")
+            print(json.dumps(nuevos_registros[0], indent=4, ensure_ascii=False))
         else:
-            print("No hay enlaces nuevos para enviar a la API ngrok.")
+            print("No hay publicaciones nuevas para agregar.")
     else:
-        print("No se pudieron obtener enlaces desde la API de Apify.")
+        print("No se pudieron obtener publicaciones desde la API de Apify.")
