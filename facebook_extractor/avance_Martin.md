@@ -81,3 +81,7 @@ Inicialmente desarrollé un código utilizando web scraping tradicional, pero no
 SEMANA 3
 Verifique que el codigo tuviera las especificaciones que el maestro había pedido, solo falta corregir bien el readme para explicar como correr el codigo y saber que hacen algunos pedazos de codigo
 
+
+SEMANA 4
+corregi algunos errores de codigo como el extraer fechas y calles , mi codigo lo tenia para guardar, el readme le faltbana pasos para la instalacion y como correr el codigo y que librerias usar.
+
