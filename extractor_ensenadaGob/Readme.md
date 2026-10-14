@@ -25,10 +25,15 @@ Este proyecto tiene como objetivo obtener y procesar noticias del sitio web del 
 El proyecto utiliza principalmente Python y diferentes librerias para realizar solicitudes web, procesar informacion y trabajar con archivos JSON.
 
 -[x] Python
+
 -[x] Requests
+
 -[x] BeautifulSoup
+
 -[x] JSON
+
 -[x] Expresiones regulares (`re`)
+
 -[x] Git / GitHub
 
 # Requisitos
