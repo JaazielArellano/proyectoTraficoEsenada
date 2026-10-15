@@ -23,7 +23,7 @@ def guardar_en_bd():
         )
         cursor = conexion.cursor()
 
-# La consulta sin la restricción de conflicto
+# Base de datos
         sql = """
             INSERT INTO public.alexis_datos (titulo, url, fecha_extraccion)
             VALUES (%s, %s, %s);
@@ -31,7 +31,6 @@ def guardar_en_bd():
 
         registros_insertados = 0
         for nota in noticias:
-            # Aquí también pasamos exactamente 3 valores
             valores = (
                 nota["titulo"],
                 nota["url"],
