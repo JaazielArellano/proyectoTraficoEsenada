@@ -14,7 +14,9 @@ Cómo correrlo:
 import pandas as pd
 import folium
 import streamlit as st
+import requests
 from streamlit_folium import st_folium
+
 
 
 # 1. Datos simulados (mock) mismos campos que el contrato JSON del proyecto
@@ -40,7 +42,7 @@ MOCK_DATA = [
      "created_by": "usuario_admin", "lat": 31.8724, "lon": -116.6205},
 ]
 
-df = pd.DataFrame(MOCK_DATA)
+#df = pd.DataFrame(MOCK_DATA)
 
 # NUEVO: lista para guardar las notas que escribas.
 # Se crea una sola vez; así no se borra cada vez que haces clic en algo.
@@ -48,11 +50,34 @@ if "notas" not in st.session_state:
     st.session_state.notas = []
 
 
+API_URL = "http://148.231.239.96:4002/api/datos"
+
+@st.cache_data(ttl=600)
+def cargar_datos():
+    try:
+        _resp = requests.get(API_URL, params={"page": 1, "limit": 100}, timeout=30)
+        _resp.raise_for_status()
+        d = pd.DataFrame(_resp.json()["datos"])
+        d = d.rename(columns={
+            "nom_vial": "street",
+            "nomb_asent": "neighborhood",
+            "latitud": "lat",
+            "longitud": "lon",
+        })
+        d["confidence"] = 1.0
+        d["source"] = "API DENUE"
+        return d.dropna(subset=["lat", "lon"])
+    except Exception as e:
+        print("No se pudo conectar a la API, usando datos simulados:", e)
+        return pd.DataFrame(MOCK_DATA)
+
+
+df = cargar_datos()
 # 2. Configuración de página + filtro simple por colonia
 
 st.set_page_config(page_title="Dashboard - Mapa", layout="wide")
 st.title("Prototipo: Mapa Interactivo")
-st.caption("Datos simulados (mock)  pendiente de conectar a la API real de PostgreSQL/Catastro")
+st.caption("Datos del DENUE desde la API")
 
 colonias = ["Todas"] + sorted(df["neighborhood"].unique().tolist())
 colonia_seleccionada = st.sidebar.selectbox("Filtrar por colonia", colonias)
@@ -120,7 +145,13 @@ for nota in st.session_state.notas:
     ).add_to(mapa)
 
 # Dibuja el mapa. La variable "resultado" guarda lo que hizo el usuario en él (por ejemplo, le das un clic).
-resultado = st_folium(mapa, width=None, height=550)
+if len(df_filtrado) > 0:
+    mapa.fit_bounds([
+        [df_filtrado["lat"].min(), df_filtrado["lon"].min()],
+        [df_filtrado["lat"].max(), df_filtrado["lon"].max()],
+    ])
+
+resultado = st_folium(mapa, width=None, height=550, returned_objects=["last_clicked"])
 
 
 # 4. CAMBIO 2 agregar una nota con un clic en el mapa
