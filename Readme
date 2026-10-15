@@ -8,8 +8,9 @@ Gráficas interactivas en el navegador con [D3.js](https://d3js.org/), a partir 
 
 - [Visual Studio Code](https://code.visualstudio.com/)
 - La extensión **Live Server** de VS Code
-- Un navegador web (Chrome, Edge, Firefox)
+- Un navegador web
 - Conexión a internet (D3.js se carga desde un CDN)
+- Ambiente virtual venv
 
 ## Instalar
 
@@ -23,7 +24,7 @@ Gráficas interactivas en el navegador con [D3.js](https://d3js.org/), a partir 
 
 ## Usar
 
-1. Abre el archivo `index.html` en VS Code.
+1. Abre el archivo `pako.html` en VS Code.
 2. Clic derecho y elige **Open with Live Server**.
 3. Se abre el navegador con las gráficas.
 
