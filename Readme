@@ -6,15 +6,15 @@ Módulo de visualización de datos que genera gráficas interactivas en el naveg
 
 ## Tabla de contenido
 
-- [Descripción](#descripción)
-- [Requisitos](#requisitos)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Estructura del código](#estructura-del-código)
-- [Tipos de gráficas recomendadas](#tipos-de-gráficas-recomendadas)
-- [Solución de problemas](#solución-de-problemas)
-- [Trabajo pendiente](#trabajo-pendiente)
-- [Notas del autor](#notas-del-autor)
+- [Descripción]
+- [Requisitos]
+- [Instalación]
+- [Uso]
+- [Estructura del código]
+- [Tipos de gráficas recomendadas]
+- [Solución de problemas]
+- [Trabajo pendiente]
+- [Notas del autor]
 - [Autor](#autor)
 
 ## Descripción
@@ -24,7 +24,7 @@ D3.js es una biblioteca de JavaScript especializada en la visualización de dato
 ## Requisitos
 
 | Requisito | Detalle |
-| --------- | ------- |
+
 | Editor | [Visual Studio Code](https://code.visualstudio.com/) |
 | Extensión | **Live Server** (para VS Code) |
 | Navegador | Cualquier navegador web moderno |
