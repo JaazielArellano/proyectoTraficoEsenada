@@ -14,7 +14,8 @@ def ejecutar_todo():
 
     # Ejecuta el módulo encargado de enviar los enlaces
     print("\n2. Ejecutando enviar_post.py")
-    enviar_post.ejecutar()
+    resultado_post = enviar_post.ejecutar()
+    print(resultado_post)
 
     # Ejecuta el módulo de extracción de datos de la página El Vigía
     print("\n3. Ejecutando extractor_vigia.py")
