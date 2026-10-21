@@ -271,6 +271,35 @@ def cargar_datos():
  
 `@st.cache_data(ttl=600)` evita pedir los datos a la API cada vez que alguien interactúa con el mapa (como el filtro de colonia o un clic) — los guarda en caché por 10 minutos.
  
+## Revisión de calidad de código con pylint
+ 
+Para cerrar esta etapa, corrí `pylint` sobre `ejemplo_dashboard.py` en el servidor del profe, para revisar el estilo y la calidad del código más allá de que simplemente "funcione":
+ 
+```
+pylint ejemplo_dashboard.py
+```
+ 
+**Primera corrida — calificación 7.37/10.** Pylint marcó estos puntos:
+ 
+| Código | Línea(s) | Problema |
+|---|---|---|
+| C0301 | 115, 147 | Líneas demasiado largas (más de 100 caracteres) |
+| C0304 | 179 | Faltaba un salto de línea en blanco al final del archivo |
+| C0116 | 56 | La función `cargar_datos()` no tenía docstring |
+| W0718 | 70 | `except Exception` demasiado general (atrapa cualquier error, no solo los de red/API) |
+| E1137 | 67, 68 | `'d' does not support item assignment` al asignar `d["confidence"]` y `d["source"]` |
+ 
+**Cómo corregí cada uno:**
+ 
+* **Líneas largas (C0301):** corté la URL del satélite de Esri en una constante aparte (`ESRI_SATELITE_URL`) repartida en varias líneas, y partí el `popup_html` en líneas más cortas.
+* **Falta de salto de línea final (C0304):** se agregó la línea en blanco al final del archivo.
+* **Falta de docstring (C0116):** se agregó una línea descriptiva justo debajo de `def cargar_datos():` explicando qué hace la función.
+* **`except` demasiado general (W0718):** se cambió `except Exception as e:` por `except requests.exceptions.RequestException as e:`, para que solo se atrapen errores relacionados con la conexión a la API (y no se oculten errores de programación por accidente).
+* **`E1137` en `d["confidence"]` / `d["source"]` (falso positivo):** investigué este error porque el código sí funcionaba bien en el navegador (ya lo había probado). Resulta que es un problema conocido de pylint con pandas: después de un `.rename()`, pylint a veces "pierde de vista" que la variable sigue siendo un `DataFrame` y cree que no admite asignación por índice. Como no es un bug real, lo documenté con un comentario `# pylint: disable=unsupported-assignment-operation` alrededor de esas dos líneas, en vez de cambiar la lógica que ya funcionaba.
+**Segunda corrida, después de corregir:** se volvió a ejecutar `pylint ejemplo_dashboard.py` para confirmar que los puntos anteriores ya no aparecieran y que la calificación subiera respecto al 7.37/10 inicial. El archivo corregido ya se subió al servidor (vía `scp`) y quedó corriendo de nuevo con `nohup` en el puerto 4001.
+ 
+**Lección:** pylint no solo encuentra errores que rompen el programa (como el `ModuleNotFoundError` de antes), también señala buenas prácticas (nombres, longitud de línea, documentación, manejo de excepciones) que ayudan a que el código sea más fácil de leer y mantener por el resto del equipo, aunque "ya funcione". También aprendí que no toda alerta de pylint es un error real — hay que entender qué está señalando antes de cambiar código que ya sabes que funciona.
+ 
 ## Lo que sigue
  
 * Confirmar que la API del DENUE (puerto 4002) quede corriendo de forma estable para dejar de depender de los datos simulados.
@@ -280,3 +309,4 @@ def cargar_datos():
 * Agrupar puntos en el mapa (`MarkerCluster`) si crecen mucho los datos, y agregar rutas (`PolyLine`) si se llega a necesitar.
 * Acordar con el equipo una forma de evitar pisarnos el trabajo en el servidor compartido (por ejemplo, cada quien con su propia rama y avisando antes de hacer cambios grandes).
  
+  
