@@ -9,16 +9,9 @@ from dotenv import load_dotenv
 # Carga las variables de entorno desde el archivo .env
 load_dotenv()
 
-# Obtiene la ruta absoluta del directorio donde se encuentra este script
-DIRECTORIO_ACTUAL = os.path.dirname(os.path.abspath(__file__))
-
-# Configuración de rutas y variables leyendo desde el .env con fallback seguro
-RUTA_ENTRADA_DEFECTO = os.path.join(DIRECTORIO_ACTUAL, "noticias_entrada.json")
-RUTA_SALIDA_DEFECTO = os.path.join(DIRECTORIO_ACTUAL, "contrato_salida.json")
-
-NOTICIAS_ENTRADA_FILE = os.getenv("NOTICIAS_ENTRADA_FILE", RUTA_ENTRADA_DEFECTO)
-CONTRATO_SALIDA_FILE = os.getenv("CONTRATO_SALIDA_FILE", RUTA_SALIDA_DEFECTO)
-#API_CATASTRO_URL = os.getenv("API_CATASTRO_URL", "https://api.catastro.ensenada.gob.mx/v1/predios")
+# Carga las rutas de los archivos desde las variables de entorno .env
+NOTICIAS_ENTRADA = os.getenv("NOTICIAS_ENTRADA", "noticias_entrada.json")
+CONTRATO_SALIDA = os.getenv("CONTRATO_SALIDA", "contrato_salida.json")
 
 
 # Define la función que identifica los días de la semana y sus números
@@ -211,7 +204,7 @@ def cargar_json(ruta_archivo=None):
     """Abre y lee la lista de noticias cargando la ruta desde el archivo .env."""
     # Si no se especifica una ruta, toma por defecto la variable configurada en el .env
     if ruta_archivo is None:
-        ruta_archivo = NOTICIAS_ENTRADA_FILE
+        ruta_archivo = NOTICIAS_ENTRADA
 
     # Abre y lee el archivo JSON
     with open(ruta_archivo, "r", encoding="utf-8") as archivo:
@@ -225,7 +218,7 @@ def guardar_json(datos, ruta_archivo=None):
     """
     # Si no se especifica una ruta, toma por defecto la variable configurada en el .env
     if ruta_archivo is None:
-        ruta_archivo = CONTRATO_SALIDA_FILE
+        ruta_archivo = CONTRATO_SALIDA
 
     # Guarda la información en el archivo JSON
     with open(ruta_archivo, "w", encoding="utf-8") as archivo:
