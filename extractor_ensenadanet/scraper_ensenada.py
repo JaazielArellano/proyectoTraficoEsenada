@@ -10,8 +10,8 @@ import uuid
 from datetime import datetime
 from urllib.parse import urljoin
 
-import requests
-from bs4 import BeautifulSoup
+import requests # pylint: disable=import-error
+from bs4 import BeautifulSoup # pylint: disable=import-error
 
 # Configuración principal
 URL_BASE = "https://www.ensenada.net/"

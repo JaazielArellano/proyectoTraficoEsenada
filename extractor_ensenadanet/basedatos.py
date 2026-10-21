@@ -1,7 +1,7 @@
 """Módulo para guardar las noticias extraídas en PostgreSQL."""
 
 import json
-import psycopg2
+import psycopg2 # pylint: disable=import-error
 
 def guardar_en_bd():
     """Lee noticias_nuevas.json e inserta los datos en alexis_datos."""

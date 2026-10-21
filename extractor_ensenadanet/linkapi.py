@@ -1,7 +1,7 @@
 """Código para subir URLs a la API de ngrok."""
 
 import json
-import requests
+import requests # pylint: disable=import-error
 
 def enviar_enlaces():
     """Lee el JSON local, extrae los enlaces y los envía a la API del equipo."""
