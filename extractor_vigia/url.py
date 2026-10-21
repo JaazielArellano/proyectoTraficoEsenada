@@ -11,8 +11,8 @@ import uuid
 from datetime import datetime
 import urllib3
 import requests
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
+from bs4 import BeautifulSoup # Requiere: pip install beautifulsoup4; pylint: disable=import-error
+from dotenv import load_dotenv # Requiere: pip install dotenv; pylint: disable=import-error
 
 
 # Cargar las variables guardadas en el archivo de configuración .env
@@ -39,6 +39,8 @@ def extractor_links():
     rss_url = os.getenv("RSS_URL")
 
     # Encabezados para simular que la petición la hace un navegador web real
+    # NOTA: Se trató de quitar el User-Agent de Mozilla ya que es un navegador antiguo,
+    # pero se mantiene para que el servidor acepte la petición HTTP.
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

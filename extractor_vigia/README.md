@@ -61,15 +61,19 @@ Después de crear el entorno virtual, se procedió a activarlo utilizando el sig
 venv\Scripts\activate
 ```
 
-Una vez activado el entorno virtual, instalé las librerías necesarias para el trabajo, usando el siguiente comando:
-
-```bash
-pip install requests beautifulsoup4 urllib3 dotenv
-```
-
 ---
 
-### 3. Ejecución del módulo
+### 3. Intalación de requerimientos (requirements.txt)
+
+Una vez activado el entorno virtual, instala las librerías necesarias mediante el archivo de requerimientos, usando el siguiente comando:
+
+```bash
+pip install -r requirements.txt
+```
+
+El archivo requirements.txt contiene la lista de librerías externas que necesita el proyecto para funcionar. Sirve para instalarlas todas juntas con un solo comando y asegurar que el programa se ejecute sin errores en cualquier computadora.
+
+### 4. Ejecución del módulo
 
 Para ejecutir el flujo completo se utilizó el siguiente comando:
 
