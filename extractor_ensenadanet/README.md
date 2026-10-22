@@ -6,7 +6,7 @@ Author(s): Alexis Eduardo Azamar Avalos
 
 Status: Ready for review
 
-Ultima actualización: 2026-10-07
+Ultima actualización: 21 de Octubre de 2026
 
 ## Contenido
 * Goals
