@@ -1,67 +1,125 @@
+# Extrae y guarda enlaces de noticias de Ensenada.
+import json
+
 import requests
 from bs4 import BeautifulSoup
-import json
-import time
 
 #############################
-    # WEBSCRAPING / Extractor 
+# WEBSCRAPING / Extractor
 #############################
+
+# URL del RSS de la pagina web
 def extractor_links():
-    rss_url = "https://www.ensenada.gob.mx/?feed=rss2"  # URL del RSS de la pagina web
-    #respuesta = requests.get(RSS_URL)
-    respuesta = requests.get(rss_url, verify=False)     # Obtener el RSS
-    soup = BeautifulSoup(respuesta.text, "xml")         # Analizar el XML
-    noticias = soup.find_all("item")                    # Buscar todas las noticias del RSS
-    lista_links=[]                                      # Lista que guarda los links
-    for noticia in noticias:                            # Extraer solamente los links
-     link = noticia.find("link")                        # En la noticia busca la etiquta link
-     if link:
-        lista_links.append(link.text)                   # Guarda los links en la lista
-    return lista_links                                  # Regresa la lista de links
+    #Extrae los enlaces de las noticias del RSS.
+    rss_url="https://www.ensenada.gob.mx/?feed=rss2"
+
+    # Obtener el RSS
+    respuesta = requests.get(rss_url, verify=False)
+
+    # Analizar el XML
+    soup = BeautifulSoup(respuesta.text, "xml")
+
+    # Buscar todas las noticias del RSS
+    noticias = soup.find_all("item")
+
+    # Lista que guarda los links
+    lista_links=[]
+
+    # Extraer solamente los links
+    for noticia in noticias:
+        # Buscar la etiqueta link
+        link = noticia.find("link")
+        
+        # Guarda los links en la lista
+        if link:
+            lista_links.append(link.text)
+
+    return lista_links
 
 ################################
-#  GUARDAR NOTICIAS EN UN JSON 
+# GUARDAR NOTICIAS EN UN JSON
 ################################
-def guardar_noticias(noticias):                                               # Funcion para guardar noticias 
-    with open("noticias_historial_ensenada.json", "w") as archivo:            # Abir un archivo para escribir informacion
-          json.dump(
+
+# Guarda las noticias en el archivo de historial
+def guardar_noticias(noticias):
+
+    with open(
+        "noticias_historial_ensenada.json",
+        "w",
+        encoding="utf-8"
+    ) as archivo_salida:
+        json.dump(
             noticias,
-            archivo,
+            archivo_salida,
             ensure_ascii=False,
             indent=4
         )
 
 ################################
-#  ACTUALIZAR NOTICIAS  
+# ACTUALIZAR NOTICIAS
 ################################
+
 def actualizar_noticias(noticias):
+    # Actualiza el historial y muestra las noticias nuevas
     nuevos_links=extractor_links()
     noticias_guardadas=noticias
-    noticias_nuevas=[]                                                                  # Aqui guardaremos solo los links nuevos
+
+    # Aqui guardaremos solo los links nuevos
+    noticias_nuevas=[]
 
     for link in nuevos_links:
         if link not in noticias_guardadas:
-            noticias_guardadas.append(link)                                             # Agregamos al historial de noticias
-            noticias_nuevas.append(link)                                                # Agregar las noticias nuevas
+
+            # Agregamos al historial de noticias
+            noticias_guardadas.append(link)
+
+            # Agregar las noticias nuevas
+            noticias_nuevas.append(link)
+
     guardar_noticias(noticias_guardadas)
 
     if noticias_nuevas:
-     print("Estas son las nuevas noticias:")
-     for link in noticias_nuevas:
-        print(link)
-        with open("noticias_nuevas_ensenada.json", "w", encoding="utf-8") as archivo:           
-            json.dump({"urls": noticias_nuevas}, archivo, ensure_ascii=False, indent=4)          # Guarda por separado unicamente las noticias nuevas
+        print("Estas son las nuevas noticias:")
+
+        for link in noticias_nuevas:
+            print(link)
+
+        with open(
+            "noticias_nuevas_ensenada.json",
+            "w",
+            encoding="utf-8"
+            ) as archivo:
+
+            # Guarda por separado unicamente las noticias nuevas
+            json.dump(
+                {"urls": noticias_nuevas},
+                archivo,
+                ensure_ascii=False,
+                indent=4)
     else:
         print("No se encontraron noticias nuevas.")
+
     print()
-    print("Noticias nuevas:", len(noticias_nuevas))                                              # Nos muestra si hay nuevas noticias
-    print("Total de noticias guardadas:", len(noticias_guardadas))                               # Total de noticias guardadas 
+
+     # Nos muestra si hay nuevas noticias
+    print("Noticias nuevas:", len(noticias_nuevas))
+
+    # Total de noticias guardadas
+    print("Total de noticias guardadas:", len(noticias_guardadas))
 
 while True:
-    with open("noticias_historial_ensenada.json", "r", encoding="utf-8") as archivo:             # Leer el historial cada vez que se revisan las noticias
+    # Leer el historial cada vez que se revisan las noticias
+    with open(
+        "noticias_historial_ensenada.json",
+        "r",
+        encoding="utf-8"
+    ) as archivo:
         datos = json.load(archivo)
-    actualizar_noticias(datos)                                                                   # Revisar el RSS y guardar los links nuevos
+
+    # Revisar el RSS y guardar los links nuevos
+    actualizar_noticias(datos)
+
     print()
     print("Esperando para volver a revisar...")
     print()
-    time.sleep(60)                                                                               # Esperar 1 min antes de repetir el proceso 
+    # time.sleep(60)  # Esperar 1 min antes de repetir el proceso
