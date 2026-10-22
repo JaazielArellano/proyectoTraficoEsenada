@@ -1,14 +1,15 @@
-
+"""Módulo para la extracción y monitoreo continuo de enlaces web."""
 
 import json
 import os
 import time
 from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 def cargar_enlaces_existentes(archivo_json):
@@ -19,13 +20,13 @@ def cargar_enlaces_existentes(archivo_json):
                 datos = json.load(f)
                 if isinstance(datos, dict) and "urls" in datos:
                     return set(datos["urls"])
-        except Exception:
+        except (json.JSONDecodeError, OSError):
             return set()
     return set()
 
 
 def guardar_enlaces(archivo_json, lista_urls):
-    """Guarda la lista de URLs en el formato {"urls": [...]} exactamente como en la imagen."""
+    """Guarda la lista de URLs en el formato {"urls": [...]}."""
     estructura_json = {
         "urls": list(lista_urls)
     }
@@ -38,20 +39,23 @@ def obtener_enlaces_actuales(url_objetivo):
     enlaces_extraidos = []
     driver = None
 
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
+
     options = uc.ChromeOptions()
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920,1080")
-    options.add_argument(
-        "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
+    options.add_argument(f"--user-agent={user_agent}")
 
     try:
         try:
             driver = uc.Chrome(options=options, version_main=153, headless=True)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             driver = uc.Chrome(options=options, headless=True)
 
         driver.get(url_objetivo)
@@ -84,13 +88,15 @@ def obtener_enlaces_actuales(url_objetivo):
 
             link_absoluto = urljoin(url_objetivo, href_relativo)
 
-            if link_absoluto.startswith(("http://", "https://")):
-                if link_absoluto not in enlaces_extraidos:
-                    enlaces_extraidos.append(link_absoluto)
+            if (
+                link_absoluto.startswith(("http://", "https://"))
+                and link_absoluto not in enlaces_extraidos
+            ):
+                enlaces_extraidos.append(link_absoluto)
 
         return enlaces_extraidos
 
-    except Exception as error:
+    except Exception as error:  # pylint: disable=broad-exception-caught
         print(f" Error durante el escaneo: {error}")
         return []
 
@@ -98,7 +104,7 @@ def obtener_enlaces_actuales(url_objetivo):
         if driver is not None:
             try:
                 driver.quit()
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
 
@@ -107,6 +113,7 @@ def monitorear_cfe(
     archivo_json="links_cfe.json",
     minutos_espera=10,
 ):
+    """Ejecuta un bucle continuo para monitorear y guardar nuevos enlaces."""
     print("=== INICIANDO COLLECTOR CFE EN SEGUNDO PLANO ===\n")
 
     try:
@@ -126,7 +133,10 @@ def monitorear_cfe(
                 # Unir los existentes con los nuevos evitando duplicados
                 todos_los_enlaces = existentes_set.union(set(nuevos_enlaces))
                 guardar_enlaces(archivo_json, todos_los_enlaces)
-                print(f"Archivo '{archivo_json}' actualizado con {len(todos_los_enlaces)} enlaces acumulados.\n")
+                print(
+                    f"Archivo '{archivo_json}' actualizado con "
+                    f"{len(todos_los_enlaces)} enlaces acumulados.\n"
+                )
             else:
                 print("ℹ No se encontraron enlaces nuevos en esta ronda.\n")
 

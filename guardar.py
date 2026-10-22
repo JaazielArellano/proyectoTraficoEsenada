@@ -1,10 +1,4 @@
 
-
-"""
-Scraper de CFE que genera y actualiza un archivo JSON ('links_cfe.json')
-guardando la lista acumulada de links con la estructura de campos requerida.
-"""
-
 from datetime import datetime
 import json
 import os
@@ -12,11 +6,9 @@ import time
 from urllib.parse import urljoin
 import uuid
 from bs4 import BeautifulSoup
-import setuptools  # Mantiene compatibilidad con distutils en Python 3.12/3.13
+import setuptools  
 import undetected_chromedriver as uc
 
-
-# PARCHE: Silenciar la advertencia OSError: [WinError 6] en Windows
 def _del_silencioso(self):
     try:
         self.quit()
@@ -55,7 +47,6 @@ def extraer_y_guardar_links(
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument("--start-maximized")
 
-    # 1. Cargar la lista existente de noticias/links guardados previamente
     registro_existente = cargar_json_existente(archivo_json)
     urls_guardadas = {item["url"] for item in registro_existente}
 
@@ -75,7 +66,7 @@ def extraer_y_guardar_links(
 
         soup = BeautifulSoup(html_content, "html.parser")
 
-        # Priorizar enlaces de noticias (div.entry-title a) o tomar todas las etiquetas <a>
+
         etiquetas_a = soup.select("div.entry-title a")
         if not etiquetas_a:
             etiquetas_a = soup.find_all("a", href=True)
@@ -95,7 +86,6 @@ def extraer_y_guardar_links(
 
             link_absoluto = urljoin(url_objetivo, href_relativo)
 
-            # Validar que no exista en el archivo JSON ni se duplique en la misma iteración
             if link_absoluto not in urls_guardadas and not any(
                 r["url"] == link_absoluto for r in nuevos_registros
             ):
