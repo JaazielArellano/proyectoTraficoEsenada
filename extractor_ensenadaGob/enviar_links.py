@@ -1,4 +1,4 @@
-"""Envía las noticias nuevas a la API."""
+# Envía las noticias nuevas a la API.
 import json
 import requests
 
