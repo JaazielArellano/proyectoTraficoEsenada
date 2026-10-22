@@ -9,11 +9,13 @@ DESTINO = BASE / 'catastro_ensenada.csv'
 
 
 def normalizar(texto):
+    """Convierte el texto a mayúsculas, elimina acentos y unifica espacios."""
     texto = unicodedata.normalize('NFKD', texto.strip().upper())
     return ' '.join(''.join(c for c in texto if not unicodedata.combining(c)).split())
 
 
 def ejecutar(origen=ORIGEN, destino=DESTINO):
+    """Filtra y normaliza las vialidades, guarda el CSV y devuelve su cantidad."""
     registros = set()
     with open(origen, newline='', encoding='utf-8-sig') as archivo:
         lector = csv.DictReader(archivo)

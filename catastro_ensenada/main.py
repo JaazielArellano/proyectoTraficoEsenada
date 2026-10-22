@@ -23,6 +23,7 @@ ARCHIVO = Path(__file__).resolve().parent / "catastro_ensenada.csv"
 
 # Cargar vialidades
 def cargar_vialidades(ruta=ARCHIVO):
+    """Carga y normaliza los nombres de las vialidades del CSV."""
     with open(ruta, newline="", encoding="utf-8-sig") as archivo:
         lector = csv.DictReader(archivo)
 
@@ -39,6 +40,7 @@ VIALIDADES = cargar_vialidades()
 # Mostrar la documentación de la API al entrar
 @app.get("/", include_in_schema=False)
 def inicio():
+    """Redirige la página inicial a la documentación de la API."""
     return RedirectResponse(url="/docs")
 
 
@@ -61,6 +63,7 @@ def buscar(
         examples=["Reforma"]
     )
 ):
+    """Indica si el nombre consultado existe en las vialidades cargadas."""
     existe = normalizar(nombre) in VIALIDADES
 
     return {
