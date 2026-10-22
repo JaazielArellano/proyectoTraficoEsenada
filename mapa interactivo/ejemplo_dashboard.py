@@ -10,9 +10,7 @@ Cómo correrlo:
     pip install streamlit pandas folium streamlit-folium requests
     streamlit run ejemplo_dashboard.py
 """
-
 import unicodedata
-
 import pandas as pd
 import folium
 import streamlit as st
@@ -52,12 +50,21 @@ else:
 # Nombres posibles de cada columna (el código usa el primero que exista en la tabla).
 # Si tu tabla usa otro nombre, agrégalo a la lista que corresponda.
 ALIAS = {
-    "titulo": ["titulo", "title", "nombre", "descripcion", "asunto", "motivo", "evento", "aviso", "tipo"],
-    "fecha":  ["fecha_extraccion", "fecha", "fecha_inicio", "fecha_aviso", "fecha_publicacion", "date", "created_at"],
-    "url":    ["url", "link", "enlace"],
-    "lat":    ["latitud", "lat", "latitude"],
-    "lon":    ["longitud", "lon", "lng", "longitude"],
-    "lugar_texto": ["colonia", "nomb_asent", "zona", "sector", "ubicacion", "lugar", "direccion", "calle", "nom_vial"],
+    "titulo": [
+        "titulo", "title", "nombre", "descripcion", "asunto",
+        "motivo", "evento", "aviso", "tipo",
+    ],
+    "fecha": [
+        "fecha_extraccion", "fecha", "fecha_inicio", "fecha_aviso",
+        "fecha_publicacion", "date", "created_at",
+    ],
+    "url": ["url", "link", "enlace"],
+    "lat": ["latitud", "lat", "latitude"],
+    "lon": ["longitud", "lon", "lng", "longitude"],
+    "lugar_texto": [
+        "colonia", "nomb_asent", "zona", "sector", "ubicacion",
+        "lugar", "direccion", "calle", "nom_vial",
+    ],
 }
 
 
@@ -94,24 +101,28 @@ LUGARES = {
 }
 
 
-def sin_acentos(texto):
-    texto = unicodedata.normalize("NFD", str(texto))
-    return "".join(c for c in texto if unicodedata.category(c) != "Mn").lower()
+def sin_acentos(cadena):
+    """Quita acentos y pasa a minúsculas, para comparar texto sin importar tildes."""
+    cadena = unicodedata.normalize("NFD", str(cadena))
+    return "".join(
+        ch for ch in cadena if unicodedata.category(ch) != "Mn"
+    ).lower()
 
 
-def ubicar(texto):
-    """Busca en el texto un lugar conocido. Regresa (lugar, lat, lon) o (None, None, None)."""
-    t = sin_acentos(texto)
+def ubicar(cadena):
+    """Busca en la cadena un lugar conocido. Regresa (lugar, lat, lon) o (None, None, None)."""
+    t = sin_acentos(cadena)
     # Busco primero los nombres más largos (ej. 'playas de chapultepec' antes que 'chapultepec')
     for lugar in sorted(LUGARES, key=len, reverse=True):
         if lugar in t:
-            lat, lon = LUGARES[lugar]
-            return lugar.title(), lat, lon
+            plat, plon = LUGARES[lugar]
+            return lugar.title(), plat, plon
     return None, None, None
 
 
 @st.cache_data(ttl=600)
 def descargar_datos(tabla):
+    """Descarga los registros de una tabla desde la API y los regresa como DataFrame."""
     # OJO: aquí NO atrapo errores. Si la API falla, Streamlit no guarda nada
     # en memoria y en el siguiente intento vuelve a consultarla.
     resp = requests.get(f"{BASE_URL}/{tabla}", params={"page": 1, "limit": 100}, timeout=30)
@@ -129,20 +140,23 @@ def descargar_datos(tabla):
 
 
 def preparar(raw):
-    """Crea columnas estándar (titulo, fecha, url, lat, lon, lugar_texto) a partir de la tabla de la API."""
+    """Crea columnas estándar (titulo, fecha, url, lat, lon, lugar_texto)
+    a partir de la tabla cruda que llega de la API."""
     d = raw.copy().reset_index(drop=True)
 
     for destino, candidatos in ALIAS.items():
         d[destino] = None
-        for c in candidatos:
-            if c in raw.columns:
-                d[destino] = raw[c].reset_index(drop=True)
+        for col in candidatos:
+            if col in raw.columns:
+                d[destino] = raw[col].reset_index(drop=True)
                 break
 
     # Si la tabla no trae título pero sí enlace, uso el final del enlace (ej. 'corte-1001')
     if d["titulo"].isna().all() and d["url"].notna().any():
         d["titulo"] = d["url"].apply(
-            lambda u: str(u).rstrip("/").split("/")[-1] if pd.notna(u) else None)
+            lambda u: str(u).rstrip("/").rsplit("/", maxsplit=1)[-1]
+            if pd.notna(u) else None
+        )
 
     d["titulo"] = d["titulo"].apply(arreglar_texto)
     d["lugar_texto"] = d["lugar_texto"].apply(arreglar_texto)
@@ -161,7 +175,7 @@ def cargar_datos(tabla):
     """Regresa (tabla_cruda, mensaje_de_error). Si todo salió bien, el error es None."""
     try:
         return descargar_datos(tabla), None
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         print("No se pudo conectar a la API:", e)
         return pd.DataFrame(), str(e)
 
@@ -177,7 +191,10 @@ df = preparar(df_raw) if len(df_raw) > 0 else pd.DataFrame(
 st.caption(f"Tabla: {TABLA_API}. Naranja = ubicación automática, azul = ubicada por ti con clic.")
 
 if error_api:
-    st.warning(f"No se pudo conectar a la API. Intenta de nuevo en un momento. Detalle: {error_api}")
+    st.warning(
+        "No se pudo conectar a la API. Intenta de nuevo en un momento. "
+        f"Detalle: {error_api}"
+    )
 elif len(df) == 0:
     st.warning("La API respondió, pero la tabla no tiene registros.")
 
@@ -196,11 +213,22 @@ else:
     df_filtrado = df.copy()
 
 # Ubicación: si la tabla trae coordenadas las uso; si no, busco el lugar en el texto
-def ubicar_fila(fila):
-    if pd.notna(fila["lat"]) and pd.notna(fila["lon"]):
-        return fila["lugar_texto"] or "Coordenadas de la API", fila["lat"], fila["lon"], True
-    lugar, lat, lon = ubicar(f"{fila['titulo']} {fila['lugar_texto'] or ''}")
-    return lugar, lat, lon, False
+def ubicar_fila(registro):
+    """Regresa (lugar, lat, lon, exacta) para un registro del DataFrame.
+
+    exacta=True si la coordenada vino de la API; False si se dedujo
+    buscando un lugar conocido dentro del texto del registro.
+    """
+    if pd.notna(registro["lat"]) and pd.notna(registro["lon"]):
+        return (
+            registro["lugar_texto"] or "Coordenadas de la API",
+            registro["lat"],
+            registro["lon"],
+            True,
+        )
+    texto_registro = f"{registro['titulo']} {registro['lugar_texto'] or ''}"
+    lugar, plat, plon = ubicar(texto_registro)
+    return lugar, plat, plon, False
 
 if len(df_filtrado) > 0:
     ubic = df_filtrado.apply(ubicar_fila, axis=1)
@@ -236,8 +264,12 @@ mapa = folium.Map(location=[centro_lat, centro_lon], zoom_start=13, tiles=None)
 folium.TileLayer("OpenStreetMap", name="Cartografía (calles)").add_to(mapa)
 
 # Fondo 2: satélite
+esri_satelite_url = (
+    "https://server.arcgisonline.com/ArcGIS/rest/services/"
+    "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+)
 folium.TileLayer(
-    tiles="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    tiles=esri_satelite_url,
     attr="Esri",
     name="Satélite",
 ).add_to(mapa)
@@ -303,10 +335,14 @@ if clic:
     opciones = [-1] + list(df_filtrado.index)
 
     def etiqueta(i):
+        """Texto que se muestra en el selector para cada opción del combo."""
         if i == -1:
             return "(Escribir nota manualmente)"
         fecha = df_filtrado.loc[i, "fecha"]
-        return f"{fecha} - {df_filtrado.loc[i, 'titulo']}" if fecha else str(df_filtrado.loc[i, "titulo"])
+        titulo_registro = df_filtrado.loc[i, "titulo"]
+        if fecha:
+            return f"{fecha} - {titulo_registro}"
+        return str(titulo_registro)
 
     elegida = st.selectbox("Registro a ubicar en este punto", opciones, format_func=etiqueta)
     calle = st.text_input("Calle o lugar")
