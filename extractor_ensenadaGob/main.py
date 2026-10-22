@@ -1,4 +1,4 @@
-"""Extrae y guarda enlaces de noticias de Ensenada."""
+# Extrae y guarda enlaces de noticias de Ensenada.
 import json
 
 import requests
