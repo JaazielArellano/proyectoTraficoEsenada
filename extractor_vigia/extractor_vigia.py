@@ -3,7 +3,7 @@
 # Importa el módulo json
 import os
 import json
-from dotenv import load_dotenv
+from dotenv import load_dotenv # Requiere: pip install dotenv; pylint: disable=import-error
 
 
 # Carga las variables de entorno desde el archivo .env

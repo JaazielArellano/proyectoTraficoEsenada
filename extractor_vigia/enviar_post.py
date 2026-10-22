@@ -7,7 +7,7 @@ petición POST.
 import json
 import os
 import requests
-from dotenv import load_dotenv
+from dotenv import load_dotenv # Requiere: pip install dotenv; pylint: disable=import-error
 
 # Cargar las variables guardadas en el archivo de configuración .env
 load_dotenv()
