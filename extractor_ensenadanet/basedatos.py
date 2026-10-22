@@ -1,7 +1,12 @@
 """Módulo para guardar las noticias extraídas en PostgreSQL."""
 
+import os
 import json
 import psycopg2 # pylint: disable=import-error
+from dotenv import load_dotenv # pylint: disable=import-error
+
+# Carga las variables desde el archivo .env
+load_dotenv()
 
 def guardar_en_bd():
     """Lee noticias_nuevas.json e inserta los datos en alexis_datos."""
@@ -13,17 +18,16 @@ def guardar_en_bd():
         return
 
     try:
-
         conexion = psycopg2.connect(
-            host="10.41.165.254",
-            port="5432",
-            database="postgres",
-            user="alexis",
-            password="alexis371"
+            host=os.getenv("DB_HOST"),
+            port=os.getenv("DB_PORT"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASS")
         )
         cursor = conexion.cursor()
 
-# Base de datos
+        # Base de datos
         sql = """
             INSERT INTO public.alexis_datos (titulo, url, fecha_extraccion)
             VALUES (%s, %s, %s);
@@ -36,7 +40,7 @@ def guardar_en_bd():
                 nota["url"],
                 nota["retrieved_at"]
             )
-            cursor.execute(sql, valores) # Línea 39 que marcaba error
+            cursor.execute(sql, valores)
             registros_insertados += cursor.rowcount
 
         conexion.commit()
