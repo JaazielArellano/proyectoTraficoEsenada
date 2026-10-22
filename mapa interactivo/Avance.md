@@ -1,7 +1,7 @@
 # Avance Mapa Interactivo
  
 **Alumno:** Edgar Eduardo Lopez Orozco
-**Periodo:** Semana 1 – Semana 2 (+ actualización de despliegue)
+**Periodo:** Semana 1 – Semana 2 (+ actualización de despliegue + cambio a la API del profe)
 **Lo que me tocó:** Dentro del módulo Dashboard, el mapa interactivo (según el Plan de Trabajo, esto cae en la Semana 2 del cronograma).
  
 ---
@@ -112,9 +112,82 @@ Por ahora las notas solo viven en la memoria de la app, así que se pierden al c
 Para correrlo:
  
 ```
-pip install streamlit pandas folium streamlit-folium
+pip install streamlit pandas folium streamlit-folium requests
 streamlit run ejemplo_dashboard.py
 ```
+ 
+### Tercer script: API del profe (puerto 4003), noticias y selector de tablas
+ 
+El profe me pidió usar otra API (`http://148.231.239.96:4003/docs`, llamada "API CRUD Dinámica PostgreSQL") en lugar de la del DENUE, así que **quité la API anterior del script** y dejé solo esta.
+ 
+**Cómo funciona la API.** Es una API genérica: la tabla que se consulta se elige en la misma URL. En `/docs` (Swagger) tiene solo 4 endpoints:
+ 
+| Método | Ruta | Para qué sirve |
+|---|---|---|
+| GET | `/api/datos/{nombre_tabla}` | Consultar una tabla (con paginación: `page` y `limit`) |
+| POST | `/api/datos/{nombre_tabla}` | Insertar un registro |
+| PUT | `/api/datos/{nombre_tabla}/{id_registro}` | Actualizar un registro |
+| DELETE | `/api/datos/{nombre_tabla}/{id_registro}` | Eliminar un registro |
+ 
+Yo solo uso el **GET**, porque el mapa únicamente necesita leer datos. Ningún endpoint lista las tablas que existen, así que hay que saber el nombre de antemano.
+ 
+**Tablas que probé:**
+ 
+| Tabla | Qué trae | Resultado |
+|---|---|---|
+| `prueba` | — | No existe (error 404) |
+| `alexis_datos` | Noticias con las columnas `id`, `titulo`, `url`, `fecha_extraccion` (18 registros cuando la probé) | Funciona, pero **no trae coordenadas** |
+| `cespe` | Enlaces a avisos de `cespe.gob.mx` (por ejemplo `.../avisos/corte-1001`) | Responde; al probarla, el título y la fecha salían vacíos porque el script todavía no conocía sus columnas (ver Error 11) |
+ 
+**Qué le cambié al script para esta versión:**
+ 
+1. **Lectura de la API sin atrapar errores dentro del caché.** La descarga vive en una función aparte (`descargar_datos(tabla)`), y el `try/except` está en otra función que la llama. Así, si la API falla, el fallo no se guarda en el caché (ver Error 10):
+ 
+```python
+BASE_URL = "http://148.231.239.96:4003/api/datos"
+ 
+@st.cache_data(ttl=600)
+def descargar_datos(tabla):
+    resp = requests.get(f"{BASE_URL}/{tabla}", params={"page": 1, "limit": 100}, timeout=30)
+    resp.raise_for_status()
+    resp.encoding = "utf-8"    # evita caracteres raros (acentos, ñ)
+    data = resp.json()
+    registros = data.get("datos") if isinstance(data, dict) else data
+    return pd.DataFrame(registros)
+```
+ 
+2. **Selector de tabla en la barra lateral.** Se puede cambiar entre `alexis_datos`, `cespe` o escribir el nombre de cualquier otra tabla, sin tocar el código. Cada tabla tiene su propio caché:
+ 
+```python
+TABLAS = {
+    "Noticias (alexis_datos)": "alexis_datos",
+    "CESPE": "cespe",
+    "Otra tabla (escribir nombre)": None,
+}
+opcion_tabla = st.sidebar.selectbox("Tabla de la API", list(TABLAS))
+```
+ 
+3. **Detección flexible de columnas.** Un diccionario `ALIAS` lista varios nombres posibles para cada dato (título, fecha, enlace, latitud, longitud, colonia o lugar) y el script usa el primero que exista en la tabla. Si la tabla no tiene título pero sí enlace, usa el final del enlace como título (por ejemplo `corte-1001`).
+ 
+4. **Ubicación de los registros en el mapa.** Como estas tablas no traen coordenadas (ver Error 9), el script hace dos cosas:
+   * Si la tabla sí trae latitud y longitud, usa esas coordenadas directo.
+   * Si no, busca en el título un lugar conocido (por ejemplo "Valle de Guadalupe" o "Maneadero") en un diccionario `LUGARES` con coordenadas **aproximadas** y pone un marcador **naranja**. Si varias noticias caen en el mismo lugar, se desplazan un poco para que no se encimen.
+   * Los marcadores **azules** siguen siendo los que ubico yo con un clic.
+ 
+```python
+LUGARES = {
+    "valle de guadalupe": (32.0800, -116.5800),
+    "maneadero": (31.7300, -116.5600),
+    "ensenada": (31.8667, -116.5964),
+    # ...
+}
+```
+ 
+5. **Ubicar una noticia con un clic.** Ahora, además de escribir la nota a mano, el formulario trae una lista para elegir cuál registro de la API se quiere ubicar en el punto donde se hizo clic. Al guardar, el marcador azul lleva el título y un enlace "Ver más".
+ 
+6. **Buscador y tablas.** El buscador de la barra lateral filtra el mapa y la tabla a la vez, sin importar mayúsculas ni acentos (hay que presionar Enter). Debajo del mapa hay una tabla resumen (fecha, título, lugar detectado, enlace) y un expander con la tabla completa tal cual viene de la API, con todas sus columnas. Las celdas vacías se muestran como `—` en lugar de `None`.
+ 
+7. **Botón "Recargar datos"** en la barra lateral, para volver a consultar la API sin reiniciar la app.
  
 ## Qué aprendí
  
@@ -128,6 +201,15 @@ Con las mejoras nuevas aprendí que:
 * El satélite se descarga por pedazos desde un servidor, por eso depende del internet.
 * Un clic en el mapa solo da **coordenadas** (latitud y longitud), no el nombre de la calle. Por eso, por ahora, el nombre de la calle se escribe a mano.
 * Streamlit vuelve a correr todo el script cada vez que el usuario interactúa, así que lo que se quiere conservar (como las notas) hay que guardarlo en `st.session_state`.
+ 
+Con la API del profe y el selector de tablas aprendí que:
+ 
+* Una API "genérica" como esta no sabe de antemano qué hay en cada tabla: el nombre y las columnas dependen de lo que se haya cargado en PostgreSQL, así que el código tiene que tolerar columnas distintas (por eso el diccionario `ALIAS`).
+* En Swagger (`/docs`) hay que tener cuidado con qué endpoint se prueba: GET solo consulta, pero POST, PUT y DELETE **modifican la base de datos** del proyecto.
+* `@st.cache_data` guarda lo que regresa la función **aunque sea un resultado vacío por un error**. Por eso conviene no atrapar el error dentro de la función cacheada.
+* Que los datos no traigan coordenadas no los hace inútiles: se pueden ubicar de forma aproximada con el lugar que mencionan, siempre avisando que la ubicación es aproximada.
+* Los acentos mal codificados (como `JU�REZ`) vienen de la codificación de caracteres, no de Streamlit ni de Folium.
+ 
 ## Errores
  
 ### Error 1: `ModuleNotFoundError` con `streamlit_folium`
@@ -223,6 +305,70 @@ git show 6d5043a:dashboard/ejemplo_dashboard.py > ejemplo_dashboard.py
  
 **Lección:** cuando se comparte un mismo usuario de servidor entre varios integrantes, conviene tener más cuidado con las ramas de Git y, si es posible, que cada quien trabaje desde su propia copia o avise antes de cambiar de rama.
  
+### Error 5: caracteres raros en los nombres (`JU�REZ`)
+ 
+En el filtro por colonia aparecían nombres como `BENITO JU�REZ`, con un signo de interrogación en lugar del acento.
+ 
+**Causa:** problema de codificación de caracteres al leer el texto de la API.
+ 
+**Solución:** forcé la lectura en UTF-8 (`resp.encoding = "utf-8"`) y agregué una función `arreglar_texto()` que corrige acentos mal codificados (por ejemplo `JuÃ¡rez` pasa a `Juárez`) y quita espacios sobrantes. También le puse formato de título (`BENITO JUÁREZ` se ve como `Benito Juárez`).
+ 
+**Lección:** si el signo `�` ya viene guardado así en la base de datos, no se puede recuperar desde Python; habría que corregirlo donde se cargaron los datos originales (por ejemplo, abriendo el CSV con la codificación correcta).
+ 
+### Error 6: conexión rechazada con la API del puerto 4003 (`WinError 10061`)
+ 
+Al probar la API nueva desde mi máquina, la terminal mostró:
+ 
+```
+No se pudo conectar a la API, usando datos simulados: HTTPConnectionPool(host='148.231.239.96', port=4003):
+Max retries exceeded ... [WinError 10061] No se puede establecer una conexión ya que el equipo de destino
+denegó expresamente dicha conexión
+```
+ 
+**Causa:** no era un error del código: el servidor rechazó la conexión porque la API no estaba corriendo o no era accesible en ese momento.
+ 
+**Solución:** esperar o avisar a quien la mantiene, y verificar abriendo `http://148.231.239.96:4003/docs` en el navegador. Mientras tanto, el respaldo con datos simulados evitó que el mapa quedara vacío.
+ 
+### Error 7: `404 Not Found` por nombre de tabla incorrecto
+ 
+```
+404 Client Error: Not Found for url: http://148.231.239.96:4003/api/datos/datos?page=1&limit=100
+```
+ 
+**Causa:** la API sí respondió, pero había usado `datos` como nombre de tabla y esa tabla no existe (la ruta quedó `/api/datos/datos`). También probé `prueba`, que tampoco existe.
+ 
+**Solución:** probar nombres directamente en `/docs`, con el endpoint **GET** y el botón "Try it out". El nombre que sí funcionó fue `alexis_datos`. Como la API no tiene un endpoint que liste las tablas, la forma segura de conocer el nombre es preguntarle al profe o revisar quién cargó los datos.
+ 
+**Otro detalle:** en una de esas pruebas abrí por error el endpoint **POST** en lugar del GET. La API respondió con un error 500 (`can't adapt type 'dict'`) porque le mandé el cuerpo de ejemplo vacío, así que aparentemente no se insertó nada. Aun así, fue un recordatorio de no usar POST, PUT ni DELETE para consultar.
+ 
+### Error 8: `Failed to fetch` en Swagger
+ 
+Al volver a probar `alexis_datos` en `/docs`, Swagger mostró "Failed to fetch" (posibles causas: CORS, falla de red). No era que la tabla no existiera: la petición no llegó al servidor. Al repetirla unos minutos después, la API respondió con los datos.
+ 
+**Lección:** la API del puerto 4003 es intermitente, así que un error de conexión no siempre significa que algo esté mal en el código o en el nombre de la tabla.
+ 
+### Error 9: el mapa salía vacío con la tabla de noticias
+ 
+Con `alexis_datos` la API cargaba bien las 18 noticias, pero el mapa no mostraba ningún marcador.
+ 
+**Causa:** la tabla solo trae `id`, `titulo`, `url` y `fecha_extraccion`: **no tiene latitud ni longitud**. Mi código descartaba (`dropna`) las filas sin coordenadas, así que no quedaba nada que dibujar.
+ 
+**Solución:** agregar la ubicación automática por lugar mencionado en el título (diccionario `LUGARES`, marcadores naranjas) y la opción de ubicar una noticia con un clic (marcadores azules). Las coordenadas del diccionario son aproximadas, y las noticias que no mencionan un lugar conocido solo aparecen en la tabla.
+ 
+### Error 10: el aviso de "no se pudieron cargar" no desaparecía aunque la API ya respondía
+ 
+**Causa:** `@st.cache_data(ttl=600)` guardaba por 10 minutos el resultado vacío que regresaba la función cuando la API fallaba. Aunque la API volviera, el script seguía usando ese resultado guardado.
+ 
+**Solución:** separar la descarga (que no atrapa errores, para que un fallo no se guarde en el caché) de la función que sí maneja el error y muestra el aviso con el detalle. También agregué el botón "Recargar datos", que limpia el caché con `st.cache_data.clear()`.
+ 
+### Error 11: la tabla `cespe` mostraba `None` en fecha, título y lugar
+ 
+Al cambiar a la tabla `cespe`, la columna de enlaces sí traía datos, pero fecha, título y lugar salían como `None`.
+ 
+**Causa:** no era un problema de la API: el script solo conocía las columnas de la tabla de noticias (`titulo`, `fecha_extraccion`) y esta tabla usa otros nombres.
+ 
+**Solución:** la detección flexible de columnas (`ALIAS`), el título tomado del enlace cuando no hay uno, y el expander con la tabla completa para poder ver qué columnas trae cada tabla. Además, el script imprime `Columnas de la API: [...]` en la terminal.
+ 
 ## Despliegue en el servidor del profe (nuevo)
  
 Después del prototipo local, probamos el dashboard en el servidor que el profe preparó para el grupo, para dejarlo accesible por IP y que cualquiera del equipo (o el profe) lo pueda revisar sin tener que correrlo en su propia máquina.
@@ -246,7 +392,7 @@ nohup ~/.local/bin/streamlit run ejemplo_dashboard.py --server.address 0.0.0.0 -
 scp ejemplo_dashboard.py septimo@148.231.239.96:/home/septimo/proyectoTraficoEsenada/dashboard/ejemplo_dashboard.py
 ```
  
-**Conexión a la API real (DENUE):** la versión actual del script ya intenta jalar los datos desde una API propia del equipo (`http://148.231.239.96:4002/api/datos`, con los campos del DENUE normalizados a los nombres que usa el mapa: `street`, `neighborhood`, `lat`, `lon`). Si esa API no responde (por ejemplo, porque todavía no está corriendo, o tarda más de 30 segundos), el script cae automáticamente a los datos simulados (`MOCK_DATA`) como respaldo, para que el mapa nunca se quede sin mostrar nada:
+**Conexión a la API real (DENUE) — versión anterior:** *(el profe pidió cambiar a otra API, así que esta función ya no está en el script actual; la versión nueva está en la sección "Tercer script")*. Esa versión del script intentaba jalar los datos desde una API propia del equipo (`http://148.231.239.96:4002/api/datos`, con los campos del DENUE normalizados a los nombres que usa el mapa: `street`, `neighborhood`, `lat`, `lon`). Si esa API no responde (por ejemplo, porque todavía no está corriendo, o tarda más de 30 segundos), el script cae automáticamente a los datos simulados (`MOCK_DATA`) como respaldo, para que el mapa nunca se quede sin mostrar nada:
  
 ```python
 @st.cache_data(ttl=600)
@@ -300,13 +446,16 @@ pylint ejemplo_dashboard.py
  
 **Lección:** pylint no solo encuentra errores que rompen el programa (como el `ModuleNotFoundError` de antes), también señala buenas prácticas (nombres, longitud de línea, documentación, manejo de excepciones) que ayudan a que el código sea más fácil de leer y mantener por el resto del equipo, aunque "ya funcione". También aprendí que no toda alerta de pylint es un error real — hay que entender qué está señalando antes de cambiar código que ya sabes que funciona.
  
+**Nota:** esta revisión de pylint se hizo sobre la versión del script con la API del DENUE. Como después se reescribió el script (API del puerto 4003, selector de tablas, ubicación de noticias), falta volver a correr `pylint` sobre la versión nueva.
+ 
 ## Lo que sigue
  
-* Confirmar que la API del DENUE (puerto 4002) quede corriendo de forma estable para dejar de depender de los datos simulados.
-* Conectar la API de Catastro para traer coordenadas reales en vez de las que puse a mano.
-* Guardar las notas que se agregan con un clic en la base de datos (a través de la API), para que no se pierdan al cerrar la app.
+* Confirmar con el profe que la API del puerto 4003 quede corriendo de forma estable (se cayó o no respondió varias veces durante las pruebas) y qué tablas voy a usar.
+* Revisar las columnas reales de la tabla `cespe` y de las demás tablas que se vayan a mostrar, y agregarlas al diccionario `ALIAS` si hace falta.
+* Conseguir una tabla con coordenadas reales (por ejemplo, de la API de Catastro) para dejar de depender de las ubicaciones aproximadas del diccionario `LUGARES`, y completar ese diccionario con los lugares que falten.
+* Guardar las notas que se agregan con un clic en la base de datos (usando el POST de la API, en una tabla que el profe designe para eso), para que no se pierdan al cerrar la app.
+* Subir la versión nueva del script al servidor con `scp` y reiniciarla con `nohup` en el puerto 4001.
+* Volver a correr `pylint` sobre la versión nueva y corregir lo que marque.
 * Obtener el nombre de la calle automáticamente a partir del punto donde se hace clic, en lugar de escribirlo a mano.
 * Agrupar puntos en el mapa (`MarkerCluster`) si crecen mucho los datos, y agregar rutas (`PolyLine`) si se llega a necesitar.
 * Acordar con el equipo una forma de evitar pisarnos el trabajo en el servidor compartido (por ejemplo, cada quien con su propia rama y avisando antes de hacer cambios grandes).
- 
-  
