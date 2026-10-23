@@ -1,5 +1,12 @@
 #MARTIN ROBERTO GONZALEZ ORTIZ
 #COMPORTAMIENTO DE DATOS
+
+"""Módulo para la extracción, procesamiento y almacenamiento de noticias de Facebook.
+
+Extrae datos mediante la API de Apify y los guarda en caché local con
+información de ubicación y fechas normalizadas.
+"""
+
 import json
 import os
 import re
@@ -7,7 +14,7 @@ from datetime import datetime
 import requests
 
 # --- CONFIGURACIÓN ---
-ARCHIVO_CACHE = "noticias_facebook_ json."
+ARCHIVO_CACHE = "noticias_facebook_json.json"
 MI_APIFY_TOKEN = "apify_api_Vj7kz88fHNwWSNunVBjoZBTzD46RJZ0G7q0h"
 
 # Días de la semana en español
@@ -42,9 +49,7 @@ def guardar_cache(nombre_archivo, registros):
 
 
 def extraer_ubicacion_del_texto(texto):
-    """
-    Analiza el texto de la publicación para identificar calle y colonia.
-    """
+    """Analiza el texto de la publicación para identificar calle y colonia."""
     if not texto:
         return "No detectado", "No detectado", "bajo"
 
@@ -53,9 +58,15 @@ def extraer_ubicacion_del_texto(texto):
     confianza = "bajo"
 
     # Patrones comunes para detectar calles
-    patron_calle = r"(?:calle|av\.|avenida|blvd\.|bulevar|calzada)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|col\.|colonia|entre|\.|$))"
+    patron_calle = (
+        r"(?:calle|av\.|avenida|blvd\.|bulevar|calzada)\s+"
+        r"([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|col\.|colonia|entre|\.|$))"
+    )
     # Patrones comunes para detectar colonias/barrios
-    patron_colonia = r"(?:col\.|colonia|fracc\.|fraccionamiento|ejido|barrio)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|entre|\.|$))"
+    patron_colonia = (
+        r"(?:col\.|colonia|fracc\.|fraccionamiento|ejido|barrio)\s+"
+        r"([A-ZÁÉÍÓÚÑa-záéíóúñ0-9\s]+?)(?=\s*(?:,|entre|\.|$))"
+    )
 
     match_calle = re.search(patron_calle, texto, re.IGNORECASE)
     match_colonia = re.search(patron_colonia, texto, re.IGNORECASE)
@@ -74,9 +85,24 @@ def extraer_ubicacion_del_texto(texto):
     return calle, colonia, confianza
 
 
+def _obtener_fecha_y_dia(raw_time):
+    """Auxiliar para parsear y dar formato a la fecha del post."""
+    if raw_time:
+        try:
+            time_clean = str(raw_time).replace("Z", "+00:00")
+            dt = datetime.fromisoformat(time_clean)
+            return dt.strftime("%Y-%m-%d"), DIAS_SEMANA.get(dt.weekday(), "")
+        except ValueError:
+            pass
+
+    ahora = datetime.now()
+    return ahora.strftime("%Y-%m-%d"), DIAS_SEMANA.get(ahora.weekday(), "")
+
+
 def extractor_facebook_apify(token_apify, limite=20):
-    """Extrae las publicaciones de Apify y las convierte al diccionario en español."""
-    endpoint = f"https://api.apify.com/v2/acts/apify~facebook-posts-scraper/run-sync-get-dataset-items?token={token_apify}"
+    """Extrae publicaciones de Apify y las convierte al diccionario en español."""
+    base_url = "https://api.apify.com/v2/acts/apify~facebook-posts-scraper"
+    endpoint = f"{base_url}/run-sync-get-dataset-items?token={token_apify}"
     payload = {
         "startUrls": [{"url": "https://www.facebook.com/GobiernoDeEnsenada"}],
         "resultsLimit": limite,
@@ -89,56 +115,51 @@ def extractor_facebook_apify(token_apify, limite=20):
         print(f"Error de conexión con Apify: {error}")
         return []
 
-    if respuesta.status_code in [200, 201]:
-        items = respuesta.json()
-        resultados = []
-
-        for item in items:
-            # 1. Obtener URL única
-            url = item.get("url") or item.get("postUrl") or item.get("canonicalUrl") or ""
-            url_limpia = url.split("?")[0].split("&")[0] if url else ""
-
-            # 2. Formatear Fecha y Día
-            raw_time = item.get("time") or item.get("timestamp")
-            if raw_time:
-                try:
-                    dt = datetime.fromisoformat(str(raw_time).replace("Z", "+00:00"))
-                    fecha_str = dt.strftime("%Y-%m-%d")
-                    dia_str = DIAS_SEMANA.get(dt.weekday(), "")
-                except ValueError:
-                    fecha_str = datetime.now().strftime("%Y-%m-%d")
-                    dia_str = DIAS_SEMANA.get(datetime.now().weekday(), "")
-            else:
-                fecha_str = datetime.now().strftime("%Y-%m-%d")
-                dia_str = DIAS_SEMANA.get(datetime.now().weekday(), "")
-
-            # 3. Extraer Calle, Colonia y Confianza del texto del post
-            texto_post = item.get("text") or item.get("caption") or ""
-            calle, colonia, confianza = extraer_ubicacion_del_texto(texto_post)
-
-            # Estructura en Español
-            resultado = {
-                "url": url_limpia,
-                "fecha": fecha_str,
-                "dia": dia_str,
-                "calle": calle,
-                "colonia": colonia,
-                "confianza": confianza,
-            }
-
-            resultados.append(resultado)
-
-        return resultados
-    else:
+    if respuesta.status_code not in [200, 201]:
         print(f"Error Apify {respuesta.status_code}: {respuesta.text}")
         return []
+
+    items = respuesta.json()
+    resultados = []
+
+    for item in items:
+        # 1. Obtener URL única
+        raw_url = (
+            item.get("url")
+            or item.get("postUrl")
+            or item.get("canonicalUrl")
+            or ""
+        )
+        url_limpia = raw_url.split("?")[0].split("&")[0] if raw_url else ""
+
+        # 2. Formatear Fecha y Día
+        fecha_str, dia_str = _obtener_fecha_y_dia(
+            item.get("time") or item.get("timestamp")
+        )
+
+        # 3. Extraer Calle, Colonia y Confianza del texto
+        texto_post = item.get("text") or item.get("caption") or ""
+        calle, colonia, confianza = extraer_ubicacion_del_texto(texto_post)
+
+        resultados.append({
+            "url": url_limpia,
+            "fecha": fecha_str,
+            "dia": dia_str,
+            "calle": calle,
+            "colonia": colonia,
+            "confianza": confianza,
+        })
+
+    return resultados
 
 
 # --- EJECUCIÓN PRINCIPAL ---
 if __name__ == "__main__":
     # 1. Cargar caché previo
     cache_registros = cargar_cache(ARCHIVO_CACHE)
-    urls_existentes = {item["url"] for item in cache_registros if "url" in item}
+    urls_existentes = {
+        item["url"] for item in cache_registros if "url" in item
+    }
     print(f"Registros previos en caché: {len(cache_registros)}")
 
     # 2. Extraer publicaciones de Apify
@@ -147,19 +168,27 @@ if __name__ == "__main__":
     if noticias_obtenidas:
         # 3. Filtrar registros no guardados previamente
         nuevos_registros = [
-            item for item in noticias_obtenidas if item["url"] and item["url"] not in urls_existentes
+            item for item in noticias_obtenidas
+            if item["url"] and item["url"] not in urls_existentes
         ]
 
         if nuevos_registros:
             cache_registros.extend(nuevos_registros)
             guardar_cache(ARCHIVO_CACHE, cache_registros)
 
-            print(f"\n¡Extracción exitosa!")
+            print("\n¡Extracción exitosa!")
             print(f"- Nuevos registros agregados hoy: {len(nuevos_registros)}")
-            print(f"- Total acumulado en '{ARCHIVO_CACHE}': {len(cache_registros)}\n")
+            print(
+                f"- Total acumulado en '{ARCHIVO_CACHE}': "
+                f"{len(cache_registros)}\n"
+            )
 
             print("Ejemplo de registro guardado:")
-            print(json.dumps(nuevos_registros[0], indent=4, ensure_ascii=False))
+            print(
+                json.dumps(
+                    nuevos_registros[0], indent=4, ensure_ascii=False
+                )
+            )
         else:
             print("No hay publicaciones nuevas para agregar.")
     else:
