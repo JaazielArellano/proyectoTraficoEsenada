@@ -85,3 +85,5 @@ Verifique que el codigo tuviera las especificaciones que el maestro había pedid
 SEMANA 4
 corregi algunos errores de codigo como el extraer fechas y calles , mi codigo lo tenia para guardar, el readme le faltbana pasos para la instalacion y como correr el codigo y que librerias usar.
 
+SEMANA 5
+el compañero de la base de datos nos dio acceso a la base y nos creo una tabla a cada uno . solamente que mi tabla ya no estaba y la borro, en el codigo tuve algunos errores de como estaba acomodado lo chque con el pylint me saco 9 y hice algunas correciones y ya me saco 9.77 lo que para mi considero una califiacion aceptable.
