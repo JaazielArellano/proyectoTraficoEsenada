@@ -161,7 +161,7 @@ Para cumplir con los estándares requeridos en entornos profesionales y en la ma
 
 > * **Reglas Regex Avanzadas:** Refinar las expresiones para detectar intersecciones complejas (ej. *"entre Calle Primera y Calle Segunda"*).  
 > * **Integración Directa a PostgreSQL:** Implementar el conector psycopg2 o sqlalchemy para insertar automáticamente los registros con confianza alto o medio en la base de datos central.  
-> * **Automatización con Crontab / Task Scheduler:** Programar la ejecución automática del script pako3json.py en el servidor para ejecutar la ingesta periódicamente
+> * **Automatización con Crontab / Task Scheduler:** Programar la ejecución automática del script y en el servidor para ejecutar la ingesta periódicamente
 
 **CODIGO FUNCIONANDO**
-
+no me deja adjuntar imagenes 
