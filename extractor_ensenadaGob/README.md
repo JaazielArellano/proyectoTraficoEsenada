@@ -30,7 +30,6 @@
 
 - **Fuente de información:** https://www.ensenada.gob.mx/?feed=rss2
 - **Repositorio del proyecto:** [Agregar aquí el enlace del repositorio personal o del equipo]
-- **API receptora:** [Configurar la dirección vigente del servicio receptor en `URL_API`]
 - **API local:** `http://127.0.0.1:5000/`, si la ruta principal está habilitada en `api.py`.
 
 ## Objetivo
