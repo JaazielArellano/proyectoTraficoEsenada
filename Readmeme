@@ -55,3 +55,18 @@ Diagrama de Comportamiento de los Módulos
     DB_Mod -->|4. Ejecuta Query SQL| PG[(Base de Datos PostgreSQL)]
     PG -->|5. Retorna filas/resultados| DB_Mod
     DB_Mod -->|6. Respuesta estructurada JSON| Client
+
+Diagrama de Flujo de la parte del Proyecto, Api Crud
+A[Inicio: Petición HTTP] --> B{¿Es GET?}
+    B -- Sí --> C[Consultar Paginación]
+    B -- No --> D{¿Método POST/PUT?}
+    D -- Sí --> E[Validar cuerpo del JSON con Pydantic]
+    D -- No --> F[Método DELETE]
+    E -- Fallo --> G[Devolver 400 Bad Request]
+    E -- Éxito --> H[Ejecutar Query SQL en PostgreSQL]
+    F --> H
+    C --> H
+    H --> I{¿Existe Tabla o Registro?}
+    I -- No --> J[Devolver 404 Not Found]
+    I -- Sí --> K[Confirmar cambios / Obtener datos]
+    K --> L[Devolver Respuesta 200/201 OK en JSON]
