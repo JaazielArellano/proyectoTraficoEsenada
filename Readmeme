@@ -27,3 +27,31 @@ Finalmente, adaptamos las consultas SQL y el modelo de datos de Pydantic dentro 
 `main.py` para que apuntaran a la tabla `prueba` con su campo `id`. Con estos cambios
 sincronizados, la ruta `/api/datos` devolvió un **`200 OK`**, confirmando que el 
 servidor, la API y la base de datos quedaron totalmente integrados y funcionales.
+
+Para llevar el proyecto a un nivel más completo y modular, expandimos la API convirtiéndola en un CRUD dinámico.
+Esto nos permitió consultar, insertar, actualizar y eliminar registros en cualquier tabla existente de PostgreSQL
+sin necesidad de hardcodear consultas fijas. Implementamos también una paginación en el método `GET` utilizando 
+los parámetros `page` y `limit`, lo que ayuda a no saturar el servidor al traer grandes volúmenes de datos.
+
+Con la API principal lista, configuramos un segundo servicio dentro del mismo servidor Linux para conectarnos 
+a la base de datos remota de mi compañero. Ubicamos el proyecto en la carpeta 
+`~/Casino/api-companero` y ajustamos las variables del `.env` (`DB_HOST`, `DB_USER`, `DB_PASSWORD`)
+para consumir sus tablas. Corrimos este servicio de forma independiente mediante Uvicorn asignándole el puerto 
+`4003` (`http://148.231.239.96:4003/docs`), logrando así orquestar dos instancias de API en simultáneo dentro del
+mismo servidor (`4002` y `4003`).
+
+A fin de permitir que aplicaciones web y clientes frontend pudieran consumir nuestra API sin problemas de 
+bloqueo en los navegadores, integramos el middleware de CORS (`CORSMiddleware`) dentro de `main.py`. Con esto 
+habilitamos el acceso desde cualquier origen (`*`) y aseguramos que todos los métodos HTTP pudiesen ser 
+ejecutados de forma limpia.
+
+Arquitectura y Diagramas del Proyecto
+Diagrama de Comportamiento de los Módulos
+
+    Client[Cliente / Swagger UI / Frontend] -->|Petición HTTP GET/POST/PUT/DELETE| API[FastAPI - main.py]
+    API -->|1. Aplica reglas CORS| CORS[CORSMiddleware]
+    API -->|2. Valida payload JSON en POST/PUT| Models[Modelos Pydantic]
+    API -->|3. Solicita conexión| DB_Mod[Módulo database.py]
+    DB_Mod -->|4. Ejecuta Query SQL| PG[(Base de Datos PostgreSQL)]
+    PG -->|5. Retorna filas/resultados| DB_Mod
+    DB_Mod -->|6. Respuesta estructurada JSON| Client
