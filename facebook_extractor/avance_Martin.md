@@ -86,4 +86,56 @@ SEMANA 4
 corregi algunos errores de codigo como el extraer fechas y calles , mi codigo lo tenia para guardar, el readme le faltbana pasos para la instalacion y como correr el codigo y que librerias usar.
 
 SEMANA 5
-el compañero de la base de datos nos dio acceso a la base y nos creo una tabla a cada uno . solamente que mi tabla ya no estaba y la borro, en el codigo tuve algunos errores de como estaba acomodado lo chque con el pylint me saco 9 y hice algunas correciones y ya me saco 9.77 lo que para mi considero una califiacion aceptable.
+Lo que me tocó hacer esta semana:
+Continuar con la integración del módulo de Facebook hacia la base de datos PostgreSQL del equipo, realizar el control de calidad, refactorización y optimización del código utilizando la herramienta Pylint, y corregir inconsistencias en el manejo del archivo de caché y la extracción de datos.
+
+Qué hice:
+
+Acceso a la Base de Datos:
+
+El compañero encargado del almacenamiento nos proporcionó credenciales de acceso a la base de datos PostgreSQL del servidor y creó las tablas individuales para cada integrante del equipo.
+
+Hubo un inconveniente con el entorno de la base de datos donde mi tabla asignada fue eliminada previamente, por lo que estuve coordinando su reestructuración para que coincida con el contrato del objeto JSON que genera mi módulo (url, fecha, dia, calle, colonia, confianza).
+
+Control de Calidad de Código y Refactorización (Pylint):
+
+Sometí el código a análisis estático con Pylint para asegurar las buenas prácticas de programación (estándar PEP 8).
+
+En la primera evaluación, Pylint otorgó una calificación de 9.0/10 debido a detalles de formato, nombres de variables, líneas de código demasiado largas y falta de documentación.
+
+Correcciones realizadas en el código:
+
+Encabezado y Documentación: Agregué mi información de identificación (# MARTIN ROBERTO GONZALEZ ORTIZ, # COMPORTAMIENTO DE DATOS) y añadí docstrings explicativos tanto al inicio del archivo como dentro de cada función.
+
+Nombre del archivo de caché: Corregí un error sintáctico en la variable ARCHIVO_CACHE cambiando el valor con errores ("noticias_facebook_ json.") por una ruta limpia y válida con extensión JSON ("noticias_facebook_json.json").
+
+Modularización de Funciones: Extraje la lógica anidada del formateo de fechas y días de la semana a una función auxiliar privada (_obtener_fecha_y_dia), evitando código duplicado en la función principal del extractor de Apify.
+
+Manejo de Errores y Flujo Limpio: Reestructuré el manejo de la respuesta HTTP de Apify utilizando salidas tempranas (early return), cambiando el bloque if respuesta.status_code in [200, 201]: anidado por una verificación directa de fallo (if respuesta.status_code not in [200, 201]: return []).
+
+Ajuste de Estilo PEP 8: Ajusté la longitud máxima de línea dividiendo los patrones complejos de Expresiones Regulares (Regex) en variables multilínea y formateé la construcción del endpoint base de Apify.
+
+Resultado: Tras aplicar las correcciones, la calificación de Pylint subió a 9.77/10, alcanzando un nivel de calidad de código aceptable para producción.
+
+Qué aprendí:
+Aprendí a utilizar Pylint como herramienta de linteo en Python para detectar código "spaghetti", variables no utilizadas y violaciones a las convenciones de estilo PEP 8. También comprendí la ventaja de modularizar trozos de código en funciones auxiliares (como _obtener_fecha_y_dia), lo cual hace que la función principal sea más limpia, legible y fácil de mantener para mis compañeros.
+
+Errores y Soluciones:
+
+Error: Pylint marcaba advertencias por código demasiado extenso en una sola línea (en los patrones de Regex y concatenación de la URL de Apify) y complejidad ciclomática dentro de extractor_facebook_apify.
+
+Causa: Toda la conversión de cadenas a datetime y manejo de excepciones de fecha estaba metida directamente en el bucle principal de procesamiento del JSON.
+
+Solución:
+
+Se creó la función auxiliar _obtener_fecha_y_dia(raw_time).
+
+Se dividió la expresión regular en cadenas con paréntesis para respetar el límite de caracteres por línea.
+
+Se corrigió el nombre de la constante del archivo JSON de salida.
+
+Lo que sigue:
+
+Asegurar la recreación de mi tabla dentro de la base de datos PostgreSQL.
+
+Probar el envío e inserción automática de los nuevos registros leídos del caché hacia la tabla de la base de datos.
