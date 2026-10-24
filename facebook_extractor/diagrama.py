@@ -1,3 +1,5 @@
+#CODIGO PARA CREAR EL DIAGRAMA
+
 """Módulo para generar visualmente el diagrama de comportamiento con Matplotlib."""
 
 import matplotlib.pyplot as plt
