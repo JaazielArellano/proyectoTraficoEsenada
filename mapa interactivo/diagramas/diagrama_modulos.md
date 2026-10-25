@@ -1,4 +1,4 @@
-# Diagrama de comportamiento de los módulos — Mapa Interactivo
+# Diagrama de comportamiento de los módulos Mapa Interactivo
 
 Este diagrama muestra cómo interactúan las funciones de `ejemplo_dashboard.py` cuando una persona usa el dashboard.
 
