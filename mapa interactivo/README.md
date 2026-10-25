@@ -173,6 +173,9 @@ Los archivos de Jesús aparecen con su nombre actual. Si los renombra, hay que a
 - [Avance.md](Avance.md): investigación, pruebas, errores y aprendizajes del mapa.
 - [Avance_conjunto.md](Avance_conjunto.md): integración del mapa con la carga de Excel y la API de prueba.
 - [DESIGN_DOC.md](DESIGN_DOC.md): diseño técnico del mapa (objetivos, alcance, alternativas).
+- [diagramas/diagrama_modulos.md](diagramas/diagrama_modulos.md): diagrama de secuencia — cómo interactúan las funciones del script cuando alguien usa el dashboard.
+- [diagramas/diagrama_flujo.md](diagramas/diagrama_flujo.md): diagrama de flujo general del proyecto (extracción → base de datos → API → dashboard).
+- [capturas/](capturas/): imágenes del dashboard en ejecución.
 - [Readme](Readme): documentación del módulo de gráficas con D3.js.
 ## Equipo
  
@@ -184,7 +187,7 @@ Los archivos de Jesús aparecen con su nombre actual. Si los renombra, hay que a
  
 ## Estado y pendientes
  
-**Estado:** prototipo funcional con datos simulados.
+**Estado:** prototipo funcional, conectado a la API real (con respaldo a datos simulados si la API no responde). Calidad de código verificada con `pylint`: calificación actual 9.71/10.
  
 **Pendientes:**
  
