@@ -48,7 +48,6 @@ else:
     TABLA_API = TABLAS[opcion_tabla]
 
 # Nombres posibles de cada columna (el código usa el primero que exista en la tabla).
-# Si tu tabla usa otro nombre, agrégalo a la lista que corresponda.
 ALIAS = {
     "titulo": [
         "titulo", "title", "nombre", "descripcion", "asunto",
