@@ -2,12 +2,14 @@
 
 Lee las credenciales desde las variables de entorno (.env) y retorna
 un objeto de conexión activo.
+"""
+
 DB_HOST=10.231.239.96
 DB_PORT=5432
 DB_NAME=postgres
 DB_USER=apis
 DB_PASSWORD=apis1
-"""
+
 
 import os
 import psycopg2
